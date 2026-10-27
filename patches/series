@@ -34,6 +34,7 @@ pantera/ui/default-theme-neutral-surfaces.patch
 pantera/ui/default-theme-picker-swatch.patch
 pantera/ui/default-theme-webui-colors.patch
 pantera/ui/default-theme-focus-ring.patch
+pantera/ui/chromium-theme-color.patch
 pantera/ntp/edit-favorites.patch
 pantera/ntp/favorites-without-history.patch
 pantera/ntp/grow-the-favorites-grid.patch

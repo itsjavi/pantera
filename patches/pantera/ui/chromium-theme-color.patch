@@ -1,0 +1,166 @@
+# Keep Chromium's own default theme as a theme color, after Pantera's two.
+#
+# Pantera's palette replaces Chromium's default (DECISION-8), which the user
+# wants to keep as a choice. The theme color picker gets a "Chromium" color
+# right after Pantera's Default and Grey. Its seed is Chromium's primary, and
+# when it's chosen the mixers use Chromium's own default palette and surfaces
+# (AddBaselinePalette, no sys overrides) instead of a palette generated from
+# the seed, so it looks exactly like Chromium. Its swatch shows Chromium's
+# default colors. See devbacklog TASK-28.
+
+--- /dev/null
++++ b/ui/color/chromium_theme.h
+@@ -0,0 +1,25 @@
++// Pantera: the "Chromium" theme color, which brings back Chromium's own default
++// theme after Pantera's (DECISION-8, devbacklog TASK-28).
++
++#ifndef UI_COLOR_CHROMIUM_THEME_H_
++#define UI_COLOR_CHROMIUM_THEME_H_
++
++#include "third_party/skia/include/core/SkColor.h"
++#include "ui/color/color_provider_key.h"
++
++namespace ui {
++
++// The seed of the "Chromium" color in the theme color picker: the primary of
++// Chromium's default palette.
++inline constexpr SkColor kChromiumThemeSeed = SkColorSetRGB(0x0B, 0x57, 0xD0);
++
++// Whether `key` is the "Chromium" theme color, which uses Chromium's default
++// palette and surfaces instead of a palette generated from the seed.
++inline bool IsChromiumTheme(const ColorProviderKey& key) {
++  return key.user_color_source == ColorProviderKey::UserColorSource::kAccent &&
++         key.user_color == kChromiumThemeSeed;
++}
++
++}  // namespace ui
++
++#endif  // UI_COLOR_CHROMIUM_THEME_H_
+--- a/ui/color/BUILD.gn
++++ b/ui/color/BUILD.gn
+@@ -168,6 +168,7 @@ component("mixers") {
+     "material_ui_color_mixer.h",
+     "native_color_mixers.cc",
+     "native_color_mixers.h",
++    "chromium_theme.h",
+     "ref_color_mixer.cc",
+     "ref_color_mixer.h",
+     "sys_color_mixer.cc",
+--- a/ui/color/ref_color_mixer.cc
++++ b/ui/color/ref_color_mixer.cc
+@@ -12,6 +12,7 @@
+ #include "base/logging.h"
+ #include "third_party/skia/include/core/SkColor.h"
+ #include "ui/base/ui_base_features.h"
++#include "ui/color/chromium_theme.h"
+ #include "ui/color/color_id.h"
+ #include "ui/color/color_mixer.h"
+ #include "ui/color/color_provider.h"
+@@ -367,6 +368,9 @@
+       key.user_color_source == ColorProviderKey::UserColorSource::kBaseline ||
+       key.user_color_source == ColorProviderKey::UserColorSource::kGrayscale) {
+     AddPanteraPalette(provider, key.color_mode);
++  } else if (IsChromiumTheme(key)) {
++    // Pantera: the "Chromium" theme color brings back Chromium's own default.
++    AddBaselinePalette(provider, key.color_mode);
+   } else {
+     // The default value for schemes is Tonal Spot.
+     auto variant = key.scheme_variant.value_or(
+--- a/ui/color/sys_color_mixer.cc
++++ b/ui/color/sys_color_mixer.cc
+@@ -10,6 +10,7 @@
+ #include "ui/color/color_id.h"
+ #include "ui/color/color_mixer.h"
+ #include "ui/color/color_provider.h"
++#include "ui/color/chromium_theme.h"
+ #include "ui/color/color_provider_key.h"
+ #include "ui/color/color_recipe.h"
+ #include "ui/color/color_transform.h"
+@@ -408,6 +409,9 @@
+     // Pantera: a deeper amber than the primary, which glares in dark mode.
+     mixer[kColorSysStateFocusRing] = {dark_mode ? kColorRefPrimary60
+                                                 : kColorRefPrimary40};
++  } else if (IsChromiumTheme(key)) {
++    // Pantera: the "Chromium" theme color is Chromium's own default theme,
++    // which has no overrides.
+   } else if (key.user_color_source ==
+                  ColorProviderKey::UserColorSource::kAccent &&
+              key.user_color.has_value()) {
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -8102,6 +8102,9 @@
+       <message name="IDS_NTP_COLORS_BLUE" desc="A color option in the customization menu on the New Tab Page.">
+         Blue
+       </message>
++      <message name="IDS_NTP_COLORS_CHROMIUM" desc="Pantera: the theme color option that brings back Chromium's own default theme.">
++        Chromium
++      </message>
+       <message name="IDS_NTP_COLORS_GREY" desc="A color option in the customization menu on the New Tab Page.">
+         Grey
+       </message>
+--- a/chrome/browser/ui/webui/cr_components/theme_color_picker/customize_chrome_colors.cc
++++ b/chrome/browser/ui/webui/cr_components/theme_color_picker/customize_chrome_colors.cc
+@@ -10,6 +10,7 @@
+ #include "chrome/browser/new_tab_page/chrome_colors/generated_colors_info.h"
+ #include "chrome/browser/new_tab_page/chrome_colors/selected_colors_info.h"
+ #include "ui/base/mojom/themes.mojom.h"
++#include "ui/color/chromium_theme.h"
+ #include "ui/color/color_provider_utils.h"
+ #include "ui/gfx/color_utils.h"
+ 
+@@ -39,9 +40,15 @@ const decltype(kCustomizeChromeColors) kCustomizeChromeColors =
+         std::make_index_sequence<std::size(kCustomizeChromeColorIds)>{});
+ 
+ const decltype(kDynamicCustomizeChromeColors) kDynamicCustomizeChromeColors =
+-    std::array<DynamicColorInfo, 13>{
++    std::array<DynamicColorInfo, 14>{
+         // ID 0 reserved for other colors.
+         // ID 1 reserved for grayscale theme.
++        // Pantera: Chromium's own default theme, after Pantera's Default and
++        // Grey (see ui/color/chromium_theme.h).
++        DynamicColorInfo(/*id=*/15,
++                         ui::kChromiumThemeSeed,
++                         IDS_NTP_COLORS_CHROMIUM,
++                         ui::mojom::BrowserColorVariant::kTonalSpot),
+         DynamicColorInfo(/*id=*/2,
+                          SkColorSetRGB(140, 171, 228),
+                          IDS_NTP_COLORS_BLUE,
+--- a/chrome/browser/ui/webui/cr_components/theme_color_picker/customize_chrome_colors.h
++++ b/chrome/browser/ui/webui/cr_components/theme_color_picker/customize_chrome_colors.h
+@@ -47,7 +47,7 @@ struct DynamicColorInfo {
+   ui::mojom::BrowserColorVariant variant;
+ };
+ 
+-extern const std::array<DynamicColorInfo, 13> kDynamicCustomizeChromeColors;
++extern const std::array<DynamicColorInfo, 14> kDynamicCustomizeChromeColors;
+ 
+ SkColor HueToSkColor(float hue);
+ 
+--- a/chrome/browser/ui/webui/cr_components/theme_color_picker/theme_color_picker_handler.cc
++++ b/chrome/browser/ui/webui/cr_components/theme_color_picker/theme_color_picker_handler.cc
+@@ -22,6 +22,7 @@
+ #include "mojo/public/cpp/bindings/pending_remote.h"
+ #include "ui/base/l10n/l10n_util.h"
+ #include "ui/base/mojom/themes.mojom.h"
++#include "ui/color/chromium_theme.h"
+ #include "ui/color/color_provider.h"
+ #include "ui/color/color_provider_key.h"
+ #include "ui/color/dynamic_color/palette_factory.h"
+@@ -51,6 +52,17 @@ theme_color_picker::mojom::ChromeColorPtr CreateDynamicChromeColor(
+       color_info.color, GetSchemeVariant(color_info.variant));
+   color->name = l10n_util::GetStringUTF8(color_info.label_id);
+   color->seed = color_info.color;
++  if (color_info.color == ui::kChromiumThemeSeed) {
++    // Pantera: the "Chromium" color shows Chromium's own default swatch.
++    color->background = is_dark_mode ? SkColorSetRGB(0xA8, 0xC7, 0xFA)
++                                     : SkColorSetRGB(0x0B, 0x57, 0xD0);
++    color->foreground = is_dark_mode ? SkColorSetRGB(0x08, 0x42, 0xA0)
++                                     : SkColorSetRGB(0xD3, 0xE3, 0xFD);
++    color->base = is_dark_mode ? SkColorSetRGB(0x75, 0x75, 0x75)
++                               : SkColorSetRGB(0xC7, 0xC7, 0xC7);
++    color->variant = color_info.variant;
++    return color;
++  }
+   color->background = is_dark_mode ? color_palette->primary().get(80)
+                                    : color_palette->primary().get(40);
+   color->foreground = is_dark_mode ? color_palette->primary().get(30)

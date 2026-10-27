@@ -1,10 +1,12 @@
-# Use the default theme's primary color for focus rings on macOS.
+# Give Pantera's themes a softer amber focus ring, also on macOS.
 #
 # With no theme color chosen, Chromium on macOS colors focus rings with the
 # system keyboard focus color, mapped to the nearest Google blue, so Pantera's
-# amber default theme (DECISION-8) kept blue focus rings in native UI and WebUI
-# pages. This keeps the theme's own focus ring color (its primary). Text
-# selection still follows the macOS highlight color. See devbacklog TASK-22.
+# amber themes (DECISION-8) kept blue focus rings in native UI and WebUI
+# pages. This keeps the theme's own focus ring, and in Pantera's Default and
+# Grey themes uses amber tone 60 in dark mode (tone 40 in light) instead of
+# the primary's tone 80, which glares. Text selection still follows the macOS
+# highlight color. See devbacklog TASK-22 and TASK-28.
 
 --- a/ui/color/mac/native_color_mixers_mac.mm
 +++ b/ui/color/mac/native_color_mixers_mac.mm
@@ -20,3 +22,25 @@
  
        const SkColor system_highlight_color =
            NSSystemColorToSkColor(NSColor.selectedTextBackgroundColor);
+--- a/ui/color/sys_color_mixer.cc
++++ b/ui/color/sys_color_mixer.cc
+@@ -405,6 +405,9 @@
+   // overrides over the baseline palette.
+   if (key.user_color_source == ColorProviderKey::UserColorSource::kGrayscale) {
+     AddGrayscaleSysColorOverrides(mixer, key);
++    // Pantera: a deeper amber than the primary, which glares in dark mode.
++    mixer[kColorSysStateFocusRing] = {dark_mode ? kColorRefPrimary60
++                                                : kColorRefPrimary40};
+   } else if (key.user_color_source ==
+                  ColorProviderKey::UserColorSource::kAccent &&
+              key.user_color.has_value()) {
+@@ -418,6 +421,9 @@
+                                                   : kColorRefPrimary10};
+     mixer[kColorSysSurfaceNumberedForeground] = {
+         dark_mode ? kColorRefNeutral90 : kColorRefNeutral60};
++    // A deeper amber than the primary, which glares in dark mode.
++    mixer[kColorSysStateFocusRing] = {dark_mode ? kColorRefPrimary60
++                                                : kColorRefPrimary40};
+   }
+ }
+ 

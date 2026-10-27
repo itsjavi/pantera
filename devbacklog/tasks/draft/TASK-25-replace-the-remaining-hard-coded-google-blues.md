@@ -32,3 +32,4 @@ Found 2026-10-27 in `build/src` (`grep -rn kGoogleBlue` over the color mixers):
   blue).
 - WebUI search fields kept a blue focus ring in a first check; recheck after
   `default-theme-webui-colors.patch`.
+- Settings' avatar picker marks the selected avatar with a blue check (seen 2026-10-27).
