@@ -3,7 +3,7 @@ id: TASK-3
 title: Restore Chrome Web Store installs
 priority: high
 labels: [phase-0, extensions, privacy]
-depends_on: []
+depends_on: [TASK-4]
 created: 2026-10-27
 ---
 
@@ -65,3 +65,6 @@ Left as ungoogled-chromium has it: content verification of store extensions
 
 Left for TASK-4: compile, install an extension from the store, press Update, and confirm with a
 proxy or `chrome://net-export` that no update check happens on startup or in the background.
+
+Moved back to todo on 2026-10-27, code complete, so that TASK-4 can be the one task in progress.
+Pick it up again as soon as the TASK-4 build exists.
