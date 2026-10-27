@@ -146,5 +146,5 @@ The whole release process, from the certificate to the GitHub Release, is in
 Pantera builds on [Chromium](https://www.chromium.org/),
 [ungoogled-chromium](https://github.com/ungoogled-software/ungoogled-chromium) and
 [ungoogled-chromium-macos](https://github.com/ungoogled-software/ungoogled-chromium-macos).
-Code imported from them is under the BSD-3-Clause license in [LICENSE](LICENSE). The license for
-Pantera's own additions hasn't been chosen yet.
+Pantera is under the same BSD-3-Clause license as they are, in [LICENSE](LICENSE). Chromium's
+third-party components keep their own licenses.
