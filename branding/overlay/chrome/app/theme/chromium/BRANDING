@@ -1,0 +1,10 @@
+COMPANY_FULLNAME=The Pantera Authors
+COMPANY_SHORTNAME=The Pantera Authors
+PRODUCT_FULLNAME=Pantera Browser
+PRODUCT_SHORTNAME=Pantera
+PRODUCT_INSTALLER_FULLNAME=Pantera Browser Installer
+PRODUCT_INSTALLER_SHORTNAME=Pantera Installer
+COPYRIGHT=Copyright @LASTCHANGE_YEAR@ The Pantera Authors and The Chromium Authors. All rights reserved.
+MAC_BUNDLE_ID=com.itsjavi.pantera
+MAC_CREATOR_CODE=Cr24
+MAC_TEAM_ID=

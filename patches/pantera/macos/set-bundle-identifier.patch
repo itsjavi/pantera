@@ -1,0 +1,22 @@
+# Register the "chromium" URL scheme for Pantera's bundle identifier.
+#
+# The bundle identifier itself is set in branding/overlay/.../BRANDING, which
+# build.sh copies over the source tree. tweak_info_plist.py only adds the
+# "chromium" URL scheme for known bundle identifiers, so Pantera's is added
+# here.
+#
+# Replaces ungoogled-chromium-macos's set-bundle-identifier.patch.
+# See https://github.com/ungoogled-software/ungoogled-chromium-macos/issues/361
+
+--- a/build/apple/tweak_info_plist.py
++++ b/build/apple/tweak_info_plist.py
+@@ -296,7 +296,8 @@
+         # in chrome/browser/shell_integration_mac.mm.
+         # Note: chrome/installer/mac/signing/modification.py handles removing
+         # this scheme for non-stable channels during signing.
+-    elif bundle_identifier == 'org.chromium.Chromium':
++    elif bundle_identifier in ('org.chromium.Chromium',
++                               'com.itsjavi.pantera'):
+         scheme = 'chromium'
+
+     url_types = plist.get('CFBundleURLTypes')
