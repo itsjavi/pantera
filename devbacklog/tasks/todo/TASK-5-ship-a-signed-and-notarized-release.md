@@ -35,3 +35,10 @@ docs live in each repo's `docs/releasing.md`.
 Pantera's `sign_and_package_app.sh` reads `MACOS_CERTIFICATE_NAME` and
 `PROD_MACOS_NOTARIZATION_APPLE_ID` / `_TEAM_ID` / `_PWD`, so the same secrets map onto it. The
 `itsjavi/pantera` repo has no `release` environment or secrets yet (2026-10-27).
+
+Found in the TASK-4 build (2026-10-27): copying the app out of the DMG gives all 946 of its
+files an empty `com.apple.FinderInfo` attribute (from `hdiutil makehybrid -hfs` in `pkg-dmg`), and
+then `codesign --verify --deep --strict` fails with "resource fork, Finder information, or
+similar detritus not allowed". The copy in `build/src/out/Default` has none, and non-strict
+verification passes. Check whether this matters for a notarized DMG (Gatekeeper, `spctl`) and,
+if it does, build the DMG another way (for example `hdiutil create -srcfolder`).

@@ -15,11 +15,11 @@ running app.
 ## Acceptance criteria
 
 - [x] About 150 GB free disk and the README's prerequisites installed
-- [ ] `MACOS_AD_HOC_SIGNING=1 ./build.sh` finishes with a `.dmg` in `build/`
+- [x] `MACOS_AD_HOC_SIGNING=1 ./build.sh` finishes with a `.dmg` in `build/`
 - [ ] The app is "Pantera Browser" with the panther icon in light and dark mode
-- [ ] Profile in `~/Library/Application Support/Pantera Browser`, keychain item "Pantera Safe Storage"
+- [x] Profile in `~/Library/Application Support/Pantera Browser`, keychain item "Pantera Safe Storage"
 - [ ] The UI says Pantera (About page, menus) in English and at least one other language
-- [ ] Every fix needed to get here is committed on its own
+- [x] Every fix needed to get here is committed on its own
 
 ## Notes
 
@@ -68,3 +68,58 @@ What it had:
    (`mac_sdk_official_version` in `build/config/mac/mac_sdk.gni`), and the Command Line Tools
    ship `MacOSX26.5.sdk` alongside 27.0. Fix:
    `build.sh -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`.
+3. Third run: finished in 3 h 18 min (06:36–09:54), 57,495 ninja steps, exit 0. It produced
+   `build/pantera-browser_156.0.8078.47-1.1_macos.dmg` (155 MB). The app is ad-hoc signed,
+   passes `codesign --verify --deep --strict`, and has bundle ID `com.itsjavi.pantera`,
+   `CFBundleName` "Pantera", `CFBundleDisplayName` "Pantera Browser" and `CrProductDirName`
+   "Pantera Browser". The string rename renamed 765 mentions and rekeyed 46,008 translations
+   in 81 languages. No Chromium patch was needed: both failures were in the build environment.
+
+The command that worked:
+
+```bash
+PATH="$PWD/.local/py313/bin:$PATH" DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+  GIT_LFS_SKIP_SMUDGE=1 MACOS_AD_HOC_SIGNING=1 \
+  ./build.sh -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk > .local/build.log 2>&1
+```
+
+The README's Building section now covers all of this (Go, the Python venv, the macOS 26 SDK,
+`DEVELOPER_DIR`, Git LFS).
+
+### The app crashed at launch
+
+The first DMG's app aborted in `main` before any browser code ran: `dlopen` of the framework
+failed with "mapping process and mapped file (non-platform) have different Team IDs". Ad-hoc
+signatures have no Team ID, and `sign_and_package_app.sh` (unchanged from upstream) signs ad-hoc
+builds with the `library` and hardened `runtime` options, both of which turn on library
+validation. Removing `library` alone wasn't enough: hardened runtime implies library validation.
+Fix (`fix(build): sign ad-hoc builds without library validation`): ad-hoc signing leaves out
+`library` and `runtime` and keeps `restrict` and `kill`. Developer ID signing is unchanged.
+Upstream's current script has the same problem.
+
+### Checked in the running app (2026-10-27, installed from the DMG into /Applications)
+
+- Name: bundle name "Pantera", display name "Pantera Browser", bundle ID `com.itsjavi.pantera`.
+- Icon: `Assets.car` has `AppIcon` stacks for Aqua (light), DarkAqua (dark) and Tintable. This
+  Mac is in dark mode, and Icon Services draws icons in the system style whatever appearance
+  the drawing process asks for, so only the dark variant could be rendered here
+  (`scripts/preview-icons.swift`): the silver panther with the amber eye on near-black, next to
+  Notes, Safari and Finder. The light variant still needs a look with the Mac in light mode.
+- Profile: the default launch created `~/Library/Application Support/Pantera Browser`; no
+  `Chromium` folder.
+- Keychain: login keychain item "Pantera Safe Storage", account "Pantera"; no "Chromium Safe
+  Storage".
+- UI, live: `chrome://settings/help` captured over the DevTools protocol (a throwaway profile
+  with `--remote-debugging-port`; this session has no Screen Recording or Accessibility access).
+  English: "About Pantera", "Pantera", "Pantera is made possible by the Chromium open source
+  project". Spanish (`-AppleLanguages '(es)'`): "Información de Pantera", "Pantera se ha creado
+  gracias al proyecto de software libre Chromium".
+- Menus, from the locale packs: `BuildMainMenu` fills `IDS_ABOUT_MAC`, `IDS_HIDE_APP_MAC` and
+  `IDS_EXIT_MAC` with `IDS_PRODUCT_NAME`, which is "Pantera" in both packs. That gives "About /
+  Hide / Quit Pantera" and "Información de / Ocultar / Salir de Pantera". The live menu bar
+  still needs a look.
+
+Follow-ups found: TASK-17 (Spanish and other translations credit "Los creadores de Pantera"
+instead of the Chromium Authors), TASK-18 (52 English strings outside the branded catalogs still
+say Chromium, such as the Incognito new tab page), TASK-19 (Chromium's logo in the Settings
+toolbar in dark mode and in the About menu icon), and a DMG note in TASK-5.
