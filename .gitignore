@@ -3,3 +3,6 @@
 .gcs_entries
 
 build/
+
+# Agent scratch space
+.local/
