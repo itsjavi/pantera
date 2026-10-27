@@ -39,8 +39,8 @@ at all.
 | 2. Content blocking | Brave's [adblock-rust](https://github.com/brave/adblock-rust) engine: request blocking, element hiding, blocked counter, filter lists fetched straight from their maintainers | Planned |
 | 3. More protections | "Forget me when I close this site", fingerprinting protections | Planned |
 
-The detailed goals are in [devbacklog/roadmap.md](devbacklog/roadmap.md) and the work is tracked
-as tasks in [devbacklog/](devbacklog/README.md).
+The detailed goals are in [devbacklog/ROADMAP.md](devbacklog/ROADMAP.md) and the work is tracked
+as tasks in [devbacklog/](devbacklog/backlog.md).
 
 ## How it's built
 

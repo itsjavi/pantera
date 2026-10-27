@@ -8,12 +8,13 @@ clones and machines.
 
 ```
 devbacklog/
-├── roadmap.md          High-level goals, one section per phase
+├── backlog.md          This guide
+├── backlog.py          The tool to read and change the backlog
+├── ROADMAP.md          High-level goals, one section per phase
 ├── decisions/          Decision records: what was decided and why
 │   ├── proposed/       Suggested, not binding yet
 │   ├── accepted/       Approved by the user; binding for all work
 │   └── deprecated/     Obsolete, kept for history
-├── scripts/backlog.py  The tool to read and change the backlog
 └── tasks/
     ├── draft/          Ideas and work that isn't ready to start
     ├── todo/           Ready to start
@@ -55,7 +56,7 @@ Findings, decisions, links, open questions.
 | `id` | `TASK-N`. Numbers increase and are never reused or renumbered. |
 | `title` | One line, imperative ("Restore…", "Add…"). |
 | `priority` | `high`, `medium` or `low`. |
-| `labels` | Optional, `[a, b]`, lowercase-kebab-case. Every task gets its phase (`phase-0` … `phase-3`, see [roadmap.md](roadmap.md)) plus area labels such as `extensions`, `privacy`, `build`, `l10n`. |
+| `labels` | Optional, `[a, b]`, lowercase-kebab-case. Every task gets its phase (`phase-0` … `phase-3`, see [ROADMAP.md](ROADMAP.md)) plus area labels such as `extensions`, `privacy`, `build`, `l10n`. |
 | `depends_on` | Optional, `[TASK-1, TASK-2]`. A task isn't ready until these are done. |
 | `created` | `YYYY-MM-DD`. |
 | `completed`, `closed` | Dates the script adds when a task moves to `done` or `wont-do`. |
@@ -125,18 +126,18 @@ accepted, deprecate the old one with `--replaced-by`.
 Run it from the repository root. It needs only Python 3.
 
 ```bash
-devbacklog/scripts/backlog.py status                 # counts, in progress, next up, waiting
-devbacklog/scripts/backlog.py next                   # the task to pick up next
-devbacklog/scripts/backlog.py list todo --label privacy
-devbacklog/scripts/backlog.py show TASK-3
-devbacklog/scripts/backlog.py new "Add Sparkle updates" --priority medium --labels phase-1,updates --state draft
-devbacklog/scripts/backlog.py move TASK-3 in-progress
-devbacklog/scripts/backlog.py decisions --task TASK-3
-devbacklog/scripts/backlog.py show DECISION-4
-devbacklog/scripts/backlog.py decide "Use Sparkle for updates" --tasks TASK-6   # proposed
-devbacklog/scripts/backlog.py accept DECISION-5      # only when the user approves
-devbacklog/scripts/backlog.py deprecate DECISION-2 --replaced-by DECISION-5
-devbacklog/scripts/backlog.py check                  # validate every task and decision
+devbacklog/backlog.py status                 # counts, in progress, next up, waiting
+devbacklog/backlog.py next                   # the task to pick up next
+devbacklog/backlog.py list todo --label privacy
+devbacklog/backlog.py show TASK-3
+devbacklog/backlog.py new "Add Sparkle updates" --priority medium --labels phase-1,updates --state draft
+devbacklog/backlog.py move TASK-3 in-progress
+devbacklog/backlog.py decisions --task TASK-3
+devbacklog/backlog.py show DECISION-4
+devbacklog/backlog.py decide "Use Sparkle for updates" --tasks TASK-6   # proposed
+devbacklog/backlog.py accept DECISION-5      # only when the user approves
+devbacklog/backlog.py deprecate DECISION-2 --replaced-by DECISION-5
+devbacklog/backlog.py check                  # validate every task and decision
 ```
 
 `show TASK-N` also lists the decisions linked to that task. `status` lists proposed decisions

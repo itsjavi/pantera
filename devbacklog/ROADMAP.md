@@ -2,7 +2,7 @@
 
 Pantera is a privacy-first Chromium browser for macOS: stock Chromium without Google services,
 with Brave-style protections and nothing extra. Each phase below is a goal; its tasks carry the
-phase's label. See `devbacklog/scripts/backlog.py list --label phase-N`.
+phase's label. See `devbacklog/backlog.py list --label phase-N`.
 
 ## Phase 0: Foundation (`phase-0`), in progress
 

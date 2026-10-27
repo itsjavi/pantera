@@ -14,7 +14,7 @@ Usage:
   backlog.py deprecate DECISION-N [--replaced-by DECISION-M]
   backlog.py check                      Validate every task and decision file.
 
-See devbacklog/README.md for the formats and workflow.
+See devbacklog/backlog.md for the formats and workflow.
 """
 
 import argparse
@@ -24,7 +24,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent
 TASKS = ROOT / "tasks"
 STATES = ("draft", "todo", "in-progress", "done", "wont-do")
 ACTIVE_STATES = ("draft", "todo", "in-progress")

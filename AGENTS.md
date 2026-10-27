@@ -11,12 +11,12 @@ repository root. It is git-ignored. Don't leave scratch files anywhere else in t
 ## Backlog
 
 Work and decisions are tracked in `devbacklog/`. It's this project's durable memory: it travels
-with the repository to every clone and machine. Read [devbacklog/README.md](devbacklog/README.md)
+with the repository to every clone and machine. Read [devbacklog/backlog.md](devbacklog/backlog.md)
 for the formats, and use its script rather than reading folders by hand.
 
-- Start by running `devbacklog/scripts/backlog.py status`. If it lists proposed decisions waiting
+- Start by running `devbacklog/backlog.py status`. If it lists proposed decisions waiting
   for the user, mention them.
-- Unless the user asks for something specific, take `devbacklog/scripts/backlog.py next`. If a
+- Unless the user asks for something specific, take `devbacklog/backlog.py next`. If a
   task's notes contain an open decision, ask the user before building on a guess.
 - Changes to the backlog system itself (its README, script or layout) are made directly and never
   get tasks.
@@ -37,7 +37,7 @@ for the formats, and use its script rather than reading folders by hand.
   the user made or approved it; their answer to your question counts. To change an accepted
   decision, ask the user, record the new one, and deprecate the old one with `--replaced-by`.
 - Run `backlog.py check` before committing backlog changes.
-- High-level goals live in [devbacklog/roadmap.md](devbacklog/roadmap.md). Label every task with
+- High-level goals live in [devbacklog/ROADMAP.md](devbacklog/ROADMAP.md). Label every task with
   its phase (`phase-0` … `phase-3`).
 
 ## Layout
