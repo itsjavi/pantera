@@ -23,5 +23,11 @@ running app.
 
 ## Notes
 
-Blocked on disk space: 69 GB free on 2026-10-27. GNU coreutils, a listed prerequisite, isn't
-installed yet.
+Blocked on disk space: 63 GB free on 2026-10-27 (M1 Max, 10 cores, 32 GB RAM, Xcode 27.1 with
+the macOS 27.0 SDK; use `build.sh -s` if Chromium 156 rejects that SDK).
+
+Prerequisites on 2026-10-27: node, readline and the Metal toolchain are installed, binutils isn't
+(nothing to unlink). Missing: python@3.13, ninja, coreutils, esbuild, typescript, and the PySocks
+and httplib2 Python modules.
+
+GitHub-hosted runners don't fit a first build (see TASK-12), so this one runs locally.
