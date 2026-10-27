@@ -61,6 +61,8 @@ for the formats, and use its script rather than reading folders by hand.
   `branding/overlay/`.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
+- `VERSION`: Pantera's own version (DECISION-9). `build.sh` passes it to Chromium through the
+  BRANDING file; raise it with `make bump-patch`, `bump-minor` or `bump-major`.
 
 ## Upstream
 

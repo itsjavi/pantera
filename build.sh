@@ -77,6 +77,10 @@ python3 "$_main_repo/utils/domain_substitution.py" apply -r "$_main_repo/domain_
 # Copy Pantera's branding (BRANDING file, app icon, product logos) over the
 # source tree. Binary files can't be carried as patches, so they live here.
 ditto "$_root_dir/branding/overlay" "$_src_dir"
+# Pantera's own version (VERSION) reaches the code as PANTERA_VERSION_STRING in
+# chrome_version.h, which Chromium generates from the BRANDING file.
+printf 'PANTERA_VERSION=%s\n' "$(cat "$_root_dir/VERSION")" \
+  >> "$_src_dir/chrome/app/theme/chromium/BRANDING"
 
 # Rename Chromium to Pantera in the UI strings and rekey their translations.
 python3 "$_root_dir/scripts/rebrand_strings.py" "$_src_dir"

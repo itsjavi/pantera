@@ -12,16 +12,16 @@ CERTIFICATE ?= $(shell security find-identity -v -p codesigning | sed -n 's/.*"\
 NOTARY_PROFILE ?= notary
 
 VENV := build/python
-VERSION = $(shell cat ungoogled-chromium/chromium_version.txt)-$(shell cat ungoogled-chromium/revision.txt).$(shell cat revision.txt)
+RELEASE_VERSION = $(shell cat ungoogled-chromium/chromium_version.txt)-$(shell cat ungoogled-chromium/revision.txt).$(shell cat revision.txt)
 APP := build/src/out/Default/Pantera Browser.app
-DMG = build/pantera-browser_$(VERSION)_macos.dmg
+DMG = build/pantera-browser_$(RELEASE_VERSION)_macos.dmg
 
 export DEVELOPER_DIR
 export PATH := $(CURDIR)/$(VENV)/bin:$(PATH)
 # The LFS files are prebuilt binaries that the build removes anyway.
 export GIT_LFS_SKIP_SMUDGE := 1
 
-.PHONY: help setup build release check branding
+.PHONY: help setup build release check branding version bump-major bump-minor bump-patch
 
 help:
 	@echo "make setup     install the build prerequisites and the Python venv"
@@ -29,6 +29,8 @@ help:
 	@echo "make release   sign the build with a Developer ID, notarize and check it"
 	@echo "make check     check the scripts, the patch series and the backlog"
 	@echo "make branding  regenerate the icon and branding assets"
+	@echo "make version   print Pantera's version (the VERSION file)"
+	@echo "make bump-patch, bump-minor, bump-major  raise Pantera's version"
 
 setup:
 	brew install python@3.13 go ninja coreutils readline node esbuild typescript
@@ -60,3 +62,16 @@ check:
 
 branding:
 	scripts/build-branding.sh
+
+version:
+	@cat VERSION
+
+# Pantera's own version (major.minor.patch), shown on the About page. Chromium's version is
+# separate (ungoogled-chromium/chromium_version.txt).
+bump-major bump-minor bump-patch:
+	@awk -F. -v part=$(@:bump-%=%) 'BEGIN { OFS = "." } { \
+		if (part == "major") { $$1++; $$2 = 0; $$3 = 0 } \
+		else if (part == "minor") { $$2++; $$3 = 0 } \
+		else { $$3++ } \
+		print }' VERSION > VERSION.tmp && mv VERSION.tmp VERSION
+	@echo "Pantera $$(cat VERSION)"

@@ -27,10 +27,14 @@ as a GitHub Release. Builds don't run in CI yet (TASK-12), so every step below r
 
 ## Version
 
-The version is `<Chromium version>-<ungoogled-chromium revision>.<Pantera revision>`, read from
-`ungoogled-chromium/chromium_version.txt`, `ungoogled-chromium/revision.txt` and `revision.txt`,
-for example `156.0.8078.47-1.1`. To release Pantera changes on the same Chromium version, raise
-`revision.txt`.
+Pantera's own version (DECISION-9) is in `VERSION`, for example `0.1.0`, and the About page shows
+it above the Chromium version. Raise it before a release with `make bump-patch`, `make bump-minor`
+or `make bump-major`.
+
+Release files and tags are still named `<Chromium version>-<ungoogled-chromium
+revision>.<Pantera revision>`, read from `ungoogled-chromium/chromium_version.txt`,
+`ungoogled-chromium/revision.txt` and `revision.txt`, for example `156.0.8078.47-1.1`. To release
+Pantera changes on the same Chromium version, raise `revision.txt`.
 
 ## Build, sign and notarize
 

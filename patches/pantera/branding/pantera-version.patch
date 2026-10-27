@@ -1,0 +1,17 @@
+# Add Pantera's own version to chrome_version.h.
+#
+# build.sh copies the VERSION file into the BRANDING file as PANTERA_VERSION,
+# and Chromium generates chrome_version.h from BRANDING, so the version is
+# available to the code as PANTERA_VERSION_STRING. See devbacklog TASK-24.
+
+--- a/chrome/common/chrome_version.h.in
++++ b/chrome/common/chrome_version.h.in
+@@ -22,6 +22,8 @@
+ #define PRODUCT_SHORTNAME_STRING "@PRODUCT_SHORTNAME@"
+ #define COPYRIGHT_STRING "@COPYRIGHT@"
+ #define OFFICIAL_BUILD_STRING "@OFFICIAL_BUILD@"
++// Pantera's own version, from the VERSION file at the repository root.
++#define PANTERA_VERSION_STRING "@PANTERA_VERSION@"
+ 
+ // Distribution Information
+ 
