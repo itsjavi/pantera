@@ -1,0 +1,75 @@
+# Restore installing extensions from the Chrome Web Store.
+#
+# ungoogled-chromium's 0005-disable-default-extensions.patch empties
+# WebstoreInstaller::DownloadCrx() and StartCrxInstaller(), so "Add to Chrome"
+# never downloads or installs anything. This puts Chromium's code back.
+#
+# Works with domain-substitution-exclusions.list, which keeps the store URLs
+# in extensions/common/extension_urls.cc and the store's access to the
+# webstorePrivate API (extensions/common/api/_api_features.json) intact.
+# See devbacklog TASK-3 and DECISION-5.
+
+--- a/extensions/browser/webstore_installer.cc
++++ b/extensions/browser/webstore_installer.cc
+@@ -98,9 +98,13 @@
+ 
+ constexpr base::TimeDelta kTimeRemainingThreshold = base::Seconds(1);
+ 
++// Folder for downloading crx files from the webstore. This is used so that the
++// crx files don't go via the usual downloads folder.
++const base::FilePath::CharType kWebstoreDownloadFolder[] =
++    FILE_PATH_LITERAL("Webstore Downloads");
++
+ base::FilePath* g_download_directory_for_tests = nullptr;
+ 
+-[[maybe_unused]]
+ base::FilePath GetDownloadFilePath(const base::FilePath& download_directory,
+                                    const ExtensionId& id) {
+   // Ensure the download directory exists. TODO(asargent) - make this use
+@@ -477,6 +481,21 @@
+ 
+ void WebstoreInstaller::DownloadCrx(const ExtensionId& extension_id,
+                                     InstallSource source) {
++  download_url_ = GetWebstoreInstallURL(extension_id, source);
++  MaybeAppendAuthUserParameter(approval_->authuser, download_url_);
++
++  base::FilePath user_data_dir =
++      ExtensionsBrowserClient::Get()->GetUserDataDir();
++  base::FilePath download_path = user_data_dir.Append(kWebstoreDownloadFolder);
++
++  base::FilePath download_directory(g_download_directory_for_tests
++                                        ? *g_download_directory_for_tests
++                                        : download_path);
++
++  GetExtensionFileTaskRunner()->PostTaskAndReplyWithResult(
++      FROM_HERE,
++      base::BindOnce(&GetDownloadFilePath, download_directory, extension_id),
++      base::BindOnce(&WebstoreInstaller::StartDownload, this, extension_id));
+ }
+ 
+ // http://crbug.com/40957413
+@@ -631,6 +650,24 @@
+ void WebstoreInstaller::StartCrxInstaller(const DownloadItem& download) {
+   DCHECK_CURRENTLY_ON(BrowserThread::UI);
+   DCHECK(!crx_installer_.get());
++
++  const InstallApproval* approval = GetAssociatedApproval(download);
++  DCHECK(approval);
++
++  crx_installer_ =
++      ExtensionsBrowserClient::Get()->CreateCrxInstallerFromDownloadItem(
++          browser_context_, download);
++
++  crx_installer_->set_expected_id(approval->extension_id);
++  crx_installer_->set_is_gallery_install(true);
++  crx_installer_->set_allow_silent_install(true);
++  crx_installer_->AddInstallerCallback(base::BindOnce(
++      &WebstoreInstaller::OnInstallerDone, weak_ptr_factory_.GetWeakPtr()));
++  if (approval->withhold_permissions) {
++    crx_installer_->set_withhold_permissions();
++  }
++
++  crx_installer_->InstallCrx(download.GetFullPath());
+ }
+ 
+ void WebstoreInstaller::ReportFailure(const std::string& error,

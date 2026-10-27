@@ -66,7 +66,13 @@ mkdir -p "$_src_dir/out/Default"
 python3 "$_main_repo/utils/prune_binaries.py" "$_src_dir" "$_main_repo/pruning.list"
 python3 "$_main_repo/utils/patches.py" apply "$_src_dir" "$_main_repo/patches" "$_root_dir/patches"
 
-python3 "$_main_repo/utils/domain_substitution.py" apply -r "$_main_repo/domain_regex.list" -f "$_main_repo/domain_substitution.list" "$_src_dir"
+# Keep the files Pantera needs with their real domains (see the reasons in the
+# exclusions list) out of domain substitution.
+_domain_substitution_list="$_root_dir/build/domain_substitution.list"
+grep -v -x -F -f <(grep -v -E '^[[:space:]]*(#|$)' "$_root_dir/domain-substitution-exclusions.list") \
+  "$_main_repo/domain_substitution.list" > "$_domain_substitution_list"
+
+python3 "$_main_repo/utils/domain_substitution.py" apply -r "$_main_repo/domain_regex.list" -f "$_domain_substitution_list" "$_src_dir"
 
 # Copy Pantera's branding (BRANDING file, app icon, product logos) over the
 # source tree. Binary files can't be carried as patches, so they live here.
@@ -74,6 +80,7 @@ ditto "$_root_dir/branding/overlay" "$_src_dir"
 
 # Rename Chromium to Pantera in the UI strings and rekey their translations.
 python3 "$_root_dir/scripts/rebrand_strings.py" "$_src_dir"
+
 # Set build flags
 cat "$_main_repo/flags.gn" "$_root_dir/flags.macos.gn" > "$_src_dir/out/Default/args.gn"
 

@@ -1,0 +1,13 @@
+# Files that build.sh keeps out of ungoogled-chromium's domain substitution.
+#
+# Domain substitution rewrites Google domains in source files so the browser
+# can't reach them. Every file listed here keeps its real domains, so each entry
+# needs a reason, and the file should contain no other Google URL that matters.
+
+# Chrome Web Store installs and on-click updates (TASK-3, DECISION-5). Holds the
+# store and update URLs. Its other Google domains only identify Safe Browsing
+# URLs that extensions must not intercept; nothing is fetched from them.
+extensions/common/extension_urls.cc
+
+# Lets chromewebstore.google.com pages use the webstorePrivate install API.
+extensions/common/api/_api_features.json
