@@ -83,22 +83,42 @@ A full build takes several hours and needs about 100–150 GB of free disk space
 building), and [Homebrew](https://brew.sh).
 
 ```bash
-brew install python@3.13 ninja coreutils readline node esbuild typescript
-pip3 install PySocks httplib2
+brew install python@3.13 go ninja coreutils readline node esbuild typescript
 xcodebuild -downloadComponent MetalToolchain
-brew unlink binutils
+brew unlink binutils  # only if it's installed
 ```
 
-Clone with the submodule, then build:
+Clone with the submodule. The build scripts need Python 3.13 as `python3`, with PySocks and
+httplib2; Homebrew's Python refuses a global `pip install`, so give the build its own virtual
+environment:
 
 ```bash
 git clone --recurse-submodules <repository-url> pantera-browser
 cd pantera-browser
-MACOS_AD_HOC_SIGNING=1 ./build.sh
+/opt/homebrew/opt/python@3.13/bin/python3.13 -m venv build/python
+build/python/bin/pip install PySocks httplib2
 ```
 
-The `.dmg` appears in `build/`. Useful options:
+Then build:
 
+```bash
+export PATH="$PWD/build/python/bin:$PATH"
+MACOS_AD_HOC_SIGNING=1 ./build.sh -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+```
+
+- Chromium 156 builds with the macOS 26 SDK. The macOS 27 SDK in Xcode 27 doesn't work: the
+  linker bundled with Chromium rejects its `.tbd` files. Pass a macOS 26 SDK with `-s`, such as
+  the Command Line Tools' `MacOSX26.5.sdk` above or the one in Xcode 26.
+- If `xcode-select -p` prints `/Library/Developer/CommandLineTools`, point the build at Xcode
+  with `export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
+- If your git config sets up Git LFS, install `git-lfs` and build with `GIT_LFS_SKIP_SMUDGE=1`.
+  The clone fails without `git-lfs`, and the LFS files (prebuilt binaries) are removed anyway.
+
+The `.dmg` appears in `build/`. Ad-hoc builds are signed without hardened runtime and library
+validation, because library validation needs a Team ID and ad-hoc signatures have none. Useful
+options:
+
+- Running `./build.sh` again reuses the cloned source.
 - `./build.sh -d` uses Chromium's official source archive instead of a shallow git clone.
 - `./build.sh -s <path-to-SDK>` builds against a specific macOS SDK.
 - `./sign_and_package_app.sh` re-runs signing and packaging without rebuilding.
