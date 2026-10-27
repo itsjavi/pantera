@@ -5,6 +5,7 @@ priority: high
 labels: [phase-0, build]
 depends_on: []
 created: 2026-10-27
+completed: 2026-10-27
 ---
 
 ## Goal
@@ -16,9 +17,9 @@ running app.
 
 - [x] About 150 GB free disk and the README's prerequisites installed
 - [x] `MACOS_AD_HOC_SIGNING=1 ./build.sh` finishes with a `.dmg` in `build/`
-- [ ] The app is "Pantera Browser" with the panther icon in light and dark mode
+- [x] The app is "Pantera Browser" with the panther icon in light and dark mode
 - [x] Profile in `~/Library/Application Support/Pantera Browser`, keychain item "Pantera Safe Storage"
-- [ ] The UI says Pantera (About page, menus) in English and at least one other language
+- [x] The UI says Pantera (About page, menus) in English and at least one other language
 - [x] Every fix needed to get here is committed on its own
 
 ## Notes
@@ -118,6 +119,8 @@ Upstream's current script has the same problem.
   `IDS_EXIT_MAC` with `IDS_PRODUCT_NAME`, which is "Pantera" in both packs. That gives "About /
   Hide / Quit Pantera" and "Información de / Ocultar / Salir de Pantera". The live menu bar
   still needs a look.
+- The user checked the two remaining items on the running app: the app menu shows About, Hide
+  and Quit Pantera, and with the Mac in light mode the Dock icon is the light panther.
 
 Follow-ups found: TASK-17 (Spanish and other translations credit "Los creadores de Pantera"
 instead of the Chromium Authors), TASK-18 (52 English strings outside the branded catalogs still
