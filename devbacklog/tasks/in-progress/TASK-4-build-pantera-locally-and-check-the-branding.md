@@ -50,3 +50,21 @@ What it had:
 - The default `python3` is Homebrew's 3.15, and Homebrew's Pythons refuse a global
   `pip3 install` (PEP 668). PySocks 1.7.1 and httplib2 0.32.0 went into a Python 3.13 venv in
   `.local/py313`, whose `bin/` goes first in `PATH` for the build so `python3` is 3.13.
+
+### Build log
+
+1. First run: `gclient sync` failed checking out `third_party/litert/src` after 10 minutes.
+   `~/.gitconfig` sets up Git LFS with `filter.lfs.required true`, but `git-lfs` wasn't
+   installed. LiteRT keeps only its prebuilt `.so`/`.dylib`/`.dll` files in LFS, and
+   `prune_binaries.py` removes prebuilt binaries anyway, so their contents aren't needed.
+   Fix: `brew install git-lfs` (3.8.1) and build with `GIT_LFS_SKIP_SMUDGE=1`. A Mac without
+   LFS in its git config isn't affected. Reran without `-d`: in `build.sh`, `-d` switches to
+   the official source tarball, while the default clone path already reuses an existing
+   checkout (`git fetch` + `reset --hard`, then `gclient sync`).
+2. Second run: everything up to `build_bindgen.py` worked (clone, patches, domain substitution,
+   branding overlay, string rename, toolchains, GN). Linking bindgen failed: the bundled
+   LLVM 23.1 `ld64.lld` rejects every `.tbd` in the macOS 27.0 SDK as malformed ("unknown
+   target"), because they list a new `arm64e.x1-macos` target. Chromium 156 expects SDK 26.5
+   (`mac_sdk_official_version` in `build/config/mac/mac_sdk.gni`), and the Command Line Tools
+   ship `MacOSX26.5.sdk` alongside 27.0. Fix:
+   `build.sh -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`.
