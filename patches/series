@@ -28,3 +28,4 @@ pantera/macos/set-profile-directory.patch
 pantera/macos/set-keychain-item-name.patch
 pantera/extensions/restore-web-store-installs.patch
 pantera/extensions/harden-web-store-pages.patch
+pantera/extensions/update-extensions-on-click.patch

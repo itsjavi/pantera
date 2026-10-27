@@ -1,0 +1,113 @@
+# Update extensions only when the user asks.
+#
+# ungoogled-chromium's disable-webstore-urls.patch stops ExtensionDownloader
+# from ever starting an update check. This restores the checks and the
+# store's default update URL, then gates every check in
+# ExtensionUpdater::CheckNow(): only the Update button in chrome://extensions
+# (foreground priority) runs one, unless automatic updates are enabled
+# (always off for now; devbacklog TASK-13 adds the opt-in setting).
+#
+# Store extensions go through ExtensionDownloader instead of UpdateService,
+# whose component-updater server stays disabled. Usage pings stay off: the
+# downloader only sends them to ping_enabled_domain ("google.com"), which
+# domain substitution rewrites. See devbacklog TASK-3 and DECISION-5.
+
+--- a/extensions/browser/updater/extension_downloader.cc
++++ b/extensions/browser/updater/extension_downloader.cc
+@@ -158,7 +158,7 @@
+                                       const GURL& update_url) {
+   if (update_url.is_empty()) {
+     // Fill in default update URL.
+-    return std::nullopt;
++    return extension_urls::GetWebstoreUpdateUrl();
+   }
+ 
+   // Skip extensions with non-empty invalid update URLs.
+@@ -176,6 +176,11 @@
+     return std::nullopt;
+   }
+ 
++  // Make sure we use SSL for store-hosted extensions.
++  if (extension_urls::IsWebstoreUpdateUrl(update_url) &&
++      !update_url.SchemeIsCryptographic()) {
++    return extension_urls::GetWebstoreUpdateUrl();
++  }
+ 
+   return update_url;
+ }
+@@ -347,6 +352,10 @@
+     AddToFetches(fetches_preparing, std::move(task));
+   pending_tasks_.clear();
+ 
++  for (auto& fetch_list : fetches_preparing) {
++    for (auto& fetch : fetch_list.second)
++      StartUpdateCheck(std::move(fetch));
++  }
+ }
+ 
+ void ExtensionDownloader::SetIdentityManager(
+--- a/chrome/browser/extensions/updater/extension_updater.cc
++++ b/chrome/browser/extensions/updater/extension_updater.cc
+@@ -91,6 +91,12 @@
+ bool g_skip_scheduled_checks_for_tests = false;
+ 
+ bool g_force_use_update_service_for_tests = false;
++
++// Pantera: whether update checks may run without the user asking for them.
++// Off until users can opt in to automatic updates.
++bool AutomaticUpdatesEnabled() {
++  return false;
++}
+ 
+ // When we've computed a days value, we want to make sure we don't send a
+ // negative value (due to the system clock being set backwards, etc.), since -1
+@@ -436,6 +442,21 @@
+ }
+ 
+ void ExtensionUpdater::CheckNow(CheckParams params) {
++  // Pantera: each check tells the update server (Google, for store
++  // extensions) the IP address and the installed extensions, so checks only
++  // run when the user asks, unless automatic updates are enabled. The Update
++  // button in chrome://extensions is the only caller with a foreground
++  // priority. Startup, scheduled, policy, external-install and
++  // runtime.requestUpdateCheck() checks finish without contacting anyone.
++  if (params.fetch_priority != DownloadFetchPriority::kForeground &&
++      !AutomaticUpdatesEnabled()) {
++    if (params.callback) {
++      content::GetUIThreadTaskRunner({})->PostTask(FROM_HERE,
++                                                   std::move(params.callback));
++    }
++    return;
++  }
++
+   std::unique_ptr<ScopedProfileKeepAlive> keep_alive =
+       ScopedProfileKeepAlive::TryAcquire(
+           profile_, ProfileKeepAliveOrigin::kExtensionUpdater);
+@@ -789,22 +810,11 @@
+ bool ExtensionUpdater::CanUseUpdateService(
+     const Extension* extension,
+     const PendingExtensionInfo* info) const {
+-  if (g_force_use_update_service_for_tests) {
+-    return true;
+-  }
+-
+-  // UpdateService can only update extensions that have been installed on the
+-  // system.
+-  // TODO(crbug.com/482088398): Eliminate this constraint.
+-  if (!extension) {
+-    return false;
+-  }
+-
+-  // UpdateService can only update extensions from the store. If `update_url`
+-  // is empty, we default to checking from the store.
+-  GURL update_url = GetEffectiveUpdateURL(*extension);
+-  return update_url.is_empty() ||
+-         extension_urls::IsWebstoreUpdateUrl(update_url);
++  // Pantera: UpdateService talks to the component updater's server, which
++  // ungoogled-chromium disables. Store extensions update through
++  // ExtensionDownloader and the store's update URL instead, which sends no
++  // usage pings because ping_enabled_domain is domain-substituted.
++  return g_force_use_update_service_for_tests;
+ }
+ 
+ void ExtensionUpdater::InstallCRXFile(FetchedCRXFile crx_file) {
