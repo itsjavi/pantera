@@ -123,11 +123,14 @@ options:
 - `./build.sh -s <path-to-SDK>` builds against a specific macOS SDK.
 - `./sign_and_package_app.sh` re-runs signing and packaging without rebuilding.
 
-To sign and notarize with a Developer ID instead of ad-hoc signing, set:
+To sign and notarize the app and the `.dmg` with a Developer ID instead of ad-hoc signing, set
+`MACOS_CERTIFICATE_NAME` and either a notarytool keychain profile or the three Apple ID
+variables:
 
 | Variable | Value |
 |---|---|
 | `MACOS_CERTIFICATE_NAME` | Certificate name, e.g. `Developer ID Application: Your Name (TEAMID)` |
+| `PROD_MACOS_NOTARIZATION_PROFILE` | Profile saved with `xcrun notarytool store-credentials` |
 | `PROD_MACOS_NOTARIZATION_APPLE_ID` | Apple Account email |
 | `PROD_MACOS_NOTARIZATION_TEAM_ID` | Developer Team ID |
 | `PROD_MACOS_NOTARIZATION_PWD` | App-specific password |

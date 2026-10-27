@@ -19,6 +19,16 @@ _pkg_dmg="$_src_dir/chrome/installer/mac/pkg-dmg"
 _bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$_app/Contents/Info.plist")"
 
 _ad_hoc="${MACOS_AD_HOC_SIGNING:-0}"
+# Stop before signing anything if a credential is missing. Notarization takes
+# either a notarytool keychain profile or an Apple ID and app-specific password.
+if (( ! _ad_hoc )); then
+  : "${MACOS_CERTIFICATE_NAME:?is not set}"
+  if [[ -z "${PROD_MACOS_NOTARIZATION_PROFILE:-}" ]]; then
+    : "${PROD_MACOS_NOTARIZATION_APPLE_ID:?is not set (or set PROD_MACOS_NOTARIZATION_PROFILE)}"
+    : "${PROD_MACOS_NOTARIZATION_TEAM_ID:?is not set (or set PROD_MACOS_NOTARIZATION_PROFILE)}"
+    : "${PROD_MACOS_NOTARIZATION_PWD:?is not set (or set PROD_MACOS_NOTARIZATION_PROFILE)}"
+  fi
+fi
 _target_dmg="${1:-}"
 if [[ -z "$_target_dmg" ]]; then
   _chromium_version="$(cat "$_root_dir/ungoogled-chromium/chromium_version.txt")"
@@ -154,21 +164,32 @@ for _bundle in "$_app" "$_helpers"/*.app; do
 done
 verify_identifier "$_framework" "$_framework/Resources/Info.plist"
 
-notarize_app() {
-  local archive="$TMPDIR/notarize.zip"
+# Notarizes and staples an app or a disk image. notarytool takes an app only
+# inside an archive, but staples the ticket to the app itself.
+notarize() {
+  local target="$1"
+  local upload="$target"
   local result="$TMPDIR/notary-result.json"
   local log="$TMPDIR/notary-log.json"
   local status submission_id
   local submit_exit=0
-  local credentials=(
-    --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID"
-    --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID"
-    --password "$PROD_MACOS_NOTARIZATION_PWD"
-  )
+  local credentials=()
+  if [[ -n "${PROD_MACOS_NOTARIZATION_PROFILE:-}" ]]; then
+    credentials=(--keychain-profile "$PROD_MACOS_NOTARIZATION_PROFILE")
+  else
+    credentials=(
+      --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID"
+      --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID"
+      --password "$PROD_MACOS_NOTARIZATION_PWD"
+    )
+  fi
 
-  ditto -c -k --keepParent "$_app" "$archive"
+  if [[ "$target" == *.app ]]; then
+    upload="$TMPDIR/notarize.zip"
+    ditto -c -k --keepParent "$target" "$upload"
+  fi
 
-  xcrun notarytool submit --wait --output-format json "${credentials[@]}" "$archive" \
+  xcrun notarytool submit --wait --output-format json "${credentials[@]}" "$upload" \
     > "$result" || submit_exit=$?
 
   cat "$result"
@@ -206,14 +227,14 @@ notarize_app() {
     return 1
   fi
 
-  xcrun stapler staple "$_app"
-  xcrun stapler validate "$_app"
+  xcrun stapler staple "$target"
+  xcrun stapler validate "$target"
 }
 
 if (( _ad_hoc )); then
   printf 'Ad-hoc signing enabled; skipping notarization and stapling.\n'
 else
-  notarize_app
+  notarize "$_app"
 fi
 
 # Package the app
@@ -222,3 +243,10 @@ fi
   --target "$_target_dmg" \
   --volname "$_product_name" --symlink /Applications:/Applications \
   --format UDBZ --verbosity 2
+
+# Gatekeeper checks the disk image when it opens, before the app inside, so
+# the image gets its own signature and ticket.
+if (( ! _ad_hoc )); then
+  sign "$_target_dmg"
+  notarize "$_target_dmg"
+fi
