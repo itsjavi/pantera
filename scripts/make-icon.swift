@@ -57,7 +57,7 @@ func fromPhoto(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
 func headPath() -> NSBezierPath {
     // Cubic segments in photo coordinates: end, control 1, control 2.
     let segments: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-        (850, 1460, 790, 1850, 830, 1600),   // chest, up to the throat
+        (850, 1460, 725, 1835, 815, 1580),   // chest, up to the throat
         (590, 1535, 780, 1530, 680, 1550),   // jaw, underside
         (515, 1455, 540, 1530, 515, 1490),   // chin
         (432, 1302, 476, 1420, 436, 1356),   // upper lip
@@ -70,10 +70,10 @@ func headPath() -> NSBezierPath {
         (1086, 326, 1010, 440, 1062, 366),   // near ear, front
         (1190, 470, 1110, 340, 1166, 410),   // near ear, back
         (1246, 660, 1214, 520, 1244, 590),   // back of the skull
-        (1330, 2100, 1222, 980, 1310, 1580), // nape, down the back of the neck
+        (1560, 2100, 1300, 850, 1480, 1350), // nape, down the back of the neck to the shoulder
     ]
     let path = NSBezierPath()
-    path.move(to: fromPhoto(762, 2100))
+    path.move(to: fromPhoto(650, 2100))
     for s in segments {
         path.curve(to: fromPhoto(s.0, s.1), controlPoint1: fromPhoto(s.2, s.3), controlPoint2: fromPhoto(s.4, s.5))
     }
