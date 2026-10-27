@@ -24,3 +24,5 @@ ungoogled-chromium/macos/fix-gn-compatibility-chromium-156.patch
 ungoogled-chromium/macos/fix-typescript-isolated-declarations.patch
 ungoogled-chromium/macos/fix-complex-builtins.patch
 pantera/macos/set-bundle-identifier.patch
+pantera/macos/set-profile-directory.patch
+pantera/macos/set-keychain-item-name.patch

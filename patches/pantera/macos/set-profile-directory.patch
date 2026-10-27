@@ -1,0 +1,22 @@
+# Keep Pantera's profile in its own folder.
+#
+# Without CrProductDirName, unbranded builds store their profile in
+# ~/Library/Application Support/Chromium, the same folder as Chromium and
+# ungoogled-chromium. Pantera would then read and overwrite their profiles.
+# ProductDirNameForBundle() in chrome/common/chrome_paths_mac.mm reads this key
+# from the outer app's Info.plist.
+#
+# ${EXECUTABLE_NAME} is the PRODUCT_FULLNAME from BRANDING ("Pantera Browser"),
+# so the profile lives in ~/Library/Application Support/Pantera Browser.
+
+--- a/chrome/app/app-Info.plist
++++ b/chrome/app/app-Info.plist
+@@ -157,6 +157,8 @@
+ 	<string>6.0</string>
+ 	<key>CFBundleName</key>
+ 	<string>${CHROMIUM_SHORT_NAME}</string>
++	<key>CrProductDirName</key>
++	<string>${EXECUTABLE_NAME}</string>
+ 	<key>CFBundlePackageType</key>
+ 	<string>APPL</string>
+ 	<key>CFBundleSignature</key>
