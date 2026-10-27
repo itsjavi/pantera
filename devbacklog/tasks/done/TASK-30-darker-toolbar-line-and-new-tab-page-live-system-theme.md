@@ -5,6 +5,7 @@ priority: medium
 labels: [phase-0, branding, ui]
 depends_on: []
 created: 2026-10-27
+completed: 2026-10-27
 ---
 
 ## Goal
@@ -17,7 +18,7 @@ toolbar.
 
 - [x] The line under the toolbar is dimmer in dark mode
 - [x] The New Tab page background is darker in dark mode in Pantera's themes
-- [ ] An open New Tab page switches light and dark with the system, without reloading
+- [x] An open New Tab page switches light and dark with the system, without reloading
 - [x] Checked in a build
 
 ## Notes
@@ -44,4 +45,7 @@ against the `#212121` toolbar; New Tab background `#111111` (was `#212121`); foc
 `#C48300`. With a New Tab page open in one window, switching Pantera's Mode in another (Light,
 Dark, Device) changed the page's background and gradient in place, without a reload (the
 ThemeService path). Not checked: a macOS appearance switch, the native theme path this task
-fixes, which needs the user to change the system setting. Leave in progress until they confirm.
+fixes, which needs the user to change the system setting.
+
+The user confirmed on 2026-10-27 that an open New Tab page switches light and dark with
+macOS's appearance.
