@@ -2,7 +2,7 @@
 """Pantera's development backlog: Markdown tasks in one folder per state, plus decision records.
 
 Usage:
-  backlog.py status                     Counts per state, tasks in progress and what's next.
+  backlog.py status                     Counts, tasks in progress, what's next, proposed decisions.
   backlog.py next                       The todo task to pick up next.
   backlog.py list [STATE ...] [--label LABEL] [--priority PRIORITY]
   backlog.py show TASK-N|DECISION-N     Print a task (with its decisions) or a decision.
@@ -10,6 +10,8 @@ Usage:
   backlog.py move TASK-N STATE          Move a task to another state.
   backlog.py decisions [--status S] [--task TASK-N]
   backlog.py decide TITLE [--tasks TASK-1,TASK-2] [--status S]
+  backlog.py accept DECISION-N          Mark a proposed decision accepted (the user's call).
+  backlog.py deprecate DECISION-N [--replaced-by DECISION-M]
   backlog.py check                      Validate every task and decision file.
 
 See devbacklog/README.md for the formats and workflow.
@@ -24,13 +26,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TASKS = ROOT / "tasks"
-STATES = ("draft", "todo", "in-progress", "done")
+STATES = ("draft", "todo", "in-progress", "done", "discarded")
+ACTIVE_STATES = ("draft", "todo", "in-progress")
+# The date field each closing state stamps on a task when it moves there.
+CLOSING_STAMPS = {"done": "completed", "discarded": "discarded"}
 PRIORITIES = ("high", "medium", "low")
 REQUIRED = ("id", "title", "priority", "created")
 ID = re.compile(r"^TASK-(\d+)$")
 LABEL = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 DECISIONS = ROOT / "decisions"
-DECISION_STATUSES = ("proposed", "accepted", "superseded", "rejected")
+DECISION_STATUSES = ("proposed", "accepted", "deprecated")
 DECISION_REQUIRED = ("id", "title", "date", "status")
 DECISION_ID = re.compile(r"^DECISION-(\d+)$")
 
@@ -130,6 +135,15 @@ def read_frontmatter(path):
     return fields, text[end + 5:]
 
 
+def set_field(text, key, value):
+    """Sets a frontmatter field in a file's text, or removes it when value is None."""
+    text = re.sub(rf"^{re.escape(key)}:.*\n", "", text, count=1, flags=re.M)
+    if value is None:
+        return text
+    end = text.find("\n---\n", 3)
+    return f"{text[:end]}\n{key}: {value}{text[end:]}"
+
+
 def load():
     tasks = []
     for state in STATES:
@@ -177,8 +191,13 @@ def cmd_status(tasks, args):
         print("\nWaiting on dependencies:")
         print("\n".join(f"  {t.row()}  (needs {', '.join(t.depends_on)})" for t in waiting))
     decisions = load_decisions()
-    accepted = sum(d.fields.get("status") == "accepted" for d in decisions)
-    print(f"\nDecisions: {len(decisions)} recorded, {accepted} accepted (backlog.py decisions)")
+    counts = " · ".join(f"{s} {sum(d.fields.get('status') == s for d in decisions)}"
+                        for s in DECISION_STATUSES)
+    print(f"\nDecisions: {counts} (only accepted ones are binding; backlog.py decisions)")
+    proposed = [d for d in decisions if d.fields.get("status") == "proposed"]
+    if proposed:
+        print("\nProposed decisions waiting for the user:")
+        print("\n".join(f"  {d.row()}" for d in proposed))
 
 
 def cmd_next(tasks, args):
@@ -192,7 +211,8 @@ def cmd_next(tasks, args):
 
 
 def cmd_list(tasks, args):
-    states = args.states or list(STATES)
+    # Discarded tasks only show up when asked for by name.
+    states = args.states or [state for state in STATES if state != "discarded"]
     for state in states:
         if state not in STATES:
             raise BacklogError(f"unknown state {state}; use one of {', '.join(STATES)}")
@@ -225,6 +245,33 @@ def cmd_decisions(tasks, args):
             if (not args.status or d.fields.get("status") == args.status)
             and (not args.task or args.task.upper() in d.tasks)]
     print("\n".join(d.row() for d in rows) or "(no decisions)")
+
+
+def find_decision(decision_id):
+    for decision in load_decisions():
+        if decision.id == decision_id.upper():
+            return decision
+    raise BacklogError(f"no decision {decision_id}")
+
+
+def set_decision_status(decision, status, replaced_by=None):
+    text = set_field(decision.path.read_text(encoding="utf-8"), "status", status)
+    text = set_field(text, "replaced_by", replaced_by)
+    decision.path.write_text(text, encoding="utf-8")
+    print(f"{decision.id}: {decision.fields.get('status')} -> {status}")
+
+
+def cmd_accept(tasks, args):
+    decision = find_decision(args.id)
+    if decision.fields.get("status") != "proposed":
+        raise BacklogError(f"{decision.id} is {decision.fields.get('status')}, not proposed")
+    set_decision_status(decision, "accepted")
+
+
+def cmd_deprecate(tasks, args):
+    decision = find_decision(args.id)
+    replaced_by = find_decision(args.replaced_by).id if args.replaced_by else None
+    set_decision_status(decision, "deprecated", replaced_by)
 
 
 def cmd_decide(tasks, args):
@@ -292,10 +339,9 @@ def cmd_move(tasks, args):
         print(f"{task.id} is already {args.state}")
         return
     text = task.path.read_text(encoding="utf-8")
-    text = re.sub(r"^completed:.*\n", "", text, count=1, flags=re.M)
-    if args.state == "done":
-        end = text.find("\n---\n", 3)
-        text = f"{text[:end]}\ncompleted: {datetime.date.today().isoformat()}{text[end:]}"
+    for state, stamp in CLOSING_STAMPS.items():
+        today = datetime.date.today().isoformat()
+        text = set_field(text, stamp, today if state == args.state else None)
     target = TASKS / args.state / task.path.name
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
@@ -326,13 +372,17 @@ def cmd_check(tasks, args):
         for label in task.labels:
             if not LABEL.match(label):
                 problems.append(f"{name}: label '{label}' must be lowercase-kebab-case")
-        if task.state == "done" and not task.fields.get("completed"):
-            problems.append(f"{name}: done tasks need a completed date")
-    ids = {task.id for task in tasks}
+        stamp = CLOSING_STAMPS.get(task.state)
+        if stamp and not task.fields.get(stamp):
+            problems.append(f"{name}: {task.state} tasks need a {stamp} date")
+    by_id = {task.id: task for task in tasks}
+    ids = set(by_id)
     for task in tasks:
         for dep in task.depends_on:
             if dep not in ids:
                 problems.append(f"{task.path.relative_to(ROOT)}: depends on unknown {dep}")
+            elif task.state in ACTIVE_STATES and by_id[dep].state == "discarded":
+                problems.append(f"{task.path.relative_to(ROOT)}: depends on {dep}, which was discarded")
     for path in TASKS.iterdir():
         if path.name.startswith("."):
             continue
@@ -377,9 +427,11 @@ def check_decisions(decisions, task_ids):
         for task_id in decision.tasks:
             if task_id not in task_ids:
                 problems.append(f"{name}: refers to unknown {task_id}")
-        superseded_by = decision.fields.get("superseded_by")
-        if status == "superseded" and superseded_by not in decision_ids:
-            problems.append(f"{name}: superseded decisions need superseded_by: DECISION-N")
+        replaced_by = decision.fields.get("replaced_by")
+        if replaced_by and replaced_by not in decision_ids:
+            problems.append(f"{name}: replaced_by refers to unknown {replaced_by}")
+        if replaced_by and status != "deprecated":
+            problems.append(f"{name}: only deprecated decisions have replaced_by")
     if DECISIONS.is_dir():
         for path in DECISIONS.iterdir():
             if not path.name.startswith(".") and path.suffix != ".md":
@@ -401,10 +453,15 @@ def main():
     decisions_parser = commands.add_parser("decisions", help="list decisions")
     decisions_parser.add_argument("--status", choices=DECISION_STATUSES)
     decisions_parser.add_argument("--task")
-    decide_parser = commands.add_parser("decide", help="record a decision")
+    decide_parser = commands.add_parser("decide", help="record a decision (proposed by default)")
     decide_parser.add_argument("title")
     decide_parser.add_argument("--tasks", default="")
-    decide_parser.add_argument("--status", default="accepted")
+    decide_parser.add_argument("--status", default="proposed")
+    accept_parser = commands.add_parser("accept", help="mark a proposed decision accepted")
+    accept_parser.add_argument("id")
+    deprecate_parser = commands.add_parser("deprecate", help="mark a decision deprecated")
+    deprecate_parser.add_argument("id")
+    deprecate_parser.add_argument("--replaced-by")
     new_parser = commands.add_parser("new", help="create a task")
     new_parser.add_argument("title")
     new_parser.add_argument("--priority", default="medium")

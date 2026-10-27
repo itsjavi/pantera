@@ -15,7 +15,8 @@ devbacklog/
     ├── draft/          Ideas and work that isn't ready to start
     ├── todo/           Ready to start
     ├── in-progress/    Being worked on
-    └── done/           Finished and verified
+    ├── done/           Finished and verified
+    └── discarded/      Won't be done
 ```
 
 ## Tasks
@@ -54,7 +55,7 @@ Findings, decisions, links, open questions.
 | `labels` | Optional, `[a, b]`, lowercase-kebab-case. Every task gets its phase (`phase-0` … `phase-3`, see [roadmap.md](roadmap.md)) plus area labels such as `extensions`, `privacy`, `build`, `l10n`. |
 | `depends_on` | Optional, `[TASK-1, TASK-2]`. A task isn't ready until these are done. |
 | `created` | `YYYY-MM-DD`. |
-| `completed` | Added by the script when a task moves to `done`. |
+| `completed`, `discarded` | Dates the script adds when a task moves to `done` or `discarded`. |
 
 The frontmatter is a strict subset of YAML: one `key: value` per line, lists in `[a, b]` form,
 no comments or nested values.
@@ -90,19 +91,31 @@ What follows from it, including the downsides.
 | Field | Rules |
 |---|---|
 | `id` | `DECISION-N`, never reused or renumbered. |
-| `status` | `proposed`, `accepted`, `superseded` or `rejected`. |
+| `status` | `proposed`, `accepted` or `deprecated`. |
 | `tasks` | Optional, `[TASK-1]`: the tasks it came from or affects. |
-| `superseded_by` | Required when `status: superseded`: the `DECISION-N` that replaces it. |
+| `replaced_by` | Optional on deprecated decisions: the `DECISION-N` that replaces it. |
 
-Don't edit an accepted decision to change its meaning. Record a new one, then mark the old one
-`superseded` with `superseded_by`.
+The statuses:
 
-## States
+- **proposed**: suggested, not yet approved. Agents can propose decisions on their own (`decide`
+  creates them as proposed). A proposal is not binding.
+- **accepted**: approved by the user. Only accepted decisions are valid for any agent work. An
+  agent sets this status only when the user decides or approves (`accept`); the user's answer to
+  an agent's question counts.
+- **deprecated**: obsolete. Kept for history; `replaced_by` points to its replacement, if any.
+
+Don't edit an accepted decision to change its meaning. Record a new one and, once it's
+accepted, deprecate the old one with `--replaced-by`.
+
+## Task states
 
 - **draft**: an idea or a task still missing a clear goal or acceptance criteria.
 - **todo**: ready to start. It has a goal and acceptance criteria.
 - **in-progress**: someone is working on it. Keep it to one task per person or agent.
-- **done**: every acceptance criterion is met and verified, and the work is committed.
+- **done**: every acceptance criterion is met and verified, and the work is committed. Gets a
+  `completed` date.
+- **discarded**: won't be done. Say why in its Notes. Gets a `discarded` date, and `list` hides it
+  unless you ask for it (`list discarded`). Tasks that depend on it need a new plan.
 
 ## The script
 
@@ -117,23 +130,30 @@ devbacklog/scripts/backlog.py new "Add Sparkle updates" --priority medium --labe
 devbacklog/scripts/backlog.py move TASK-3 in-progress
 devbacklog/scripts/backlog.py decisions --task TASK-3
 devbacklog/scripts/backlog.py show DECISION-4
-devbacklog/scripts/backlog.py decide "Use Sparkle for updates" --tasks TASK-6
+devbacklog/scripts/backlog.py decide "Use Sparkle for updates" --tasks TASK-6   # proposed
+devbacklog/scripts/backlog.py accept DECISION-5      # only when the user approves
+devbacklog/scripts/backlog.py deprecate DECISION-2 --replaced-by DECISION-5
 devbacklog/scripts/backlog.py check                  # validate every task and decision
 ```
 
-`show TASK-N` also lists the decisions linked to that task.
+`show TASK-N` also lists the decisions linked to that task. `status` lists proposed decisions
+waiting for the user.
 
 **Next up** is the highest-priority task in `todo` whose dependencies are all done; ties go to
 the lowest number.
 
 ## Workflow
 
-1. Check `status` before starting work.
+1. Check `status` before starting work, including proposed decisions waiting for the user.
 2. Take `next`, unless someone asked for something specific. Move the task to `in-progress`.
-   Read its linked decisions, and any others for the area you're changing.
-3. Do the work. Tick acceptance criteria as they're met and add findings to Notes. When a choice
-   is made along the way, record it with `decide`.
-4. When everything is verified, move the task to `done` and commit the move with the change.
+   Read its accepted decisions, and any others for the area you're changing.
+3. Do the work. Tick acceptance criteria as they're met and add findings to Notes. Record choices
+   made along the way with `decide`: proposed, or accepted when the user made the call.
+4. When everything is verified, move the task to `done` and commit the move with the change. If
+   it won't be done, move it to `discarded` and say why.
 5. Put follow-up work you discover in a new task (`draft` if it's unclear, `todo` if it's ready)
    instead of growing the current one.
 6. Run `check` before committing backlog changes.
+
+Changes to the backlog system itself (this README, the script, the folder layout) are made
+directly. They never get tasks.

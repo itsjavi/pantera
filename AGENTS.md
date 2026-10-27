@@ -14,9 +14,12 @@ Work and decisions are tracked in `devbacklog/`. It's this project's durable mem
 with the repository to every clone and machine. Read [devbacklog/README.md](devbacklog/README.md)
 for the formats, and use its script rather than reading folders by hand.
 
-- Start by running `devbacklog/scripts/backlog.py status`.
+- Start by running `devbacklog/scripts/backlog.py status`. If it lists proposed decisions waiting
+  for the user, mention them.
 - Unless the user asks for something specific, take `devbacklog/scripts/backlog.py next`. If a
   task's notes contain an open decision, ask the user before building on a guess.
+- Changes to the backlog system itself (its README, script or layout) are made directly and never
+  get tasks.
 - Before starting a task, run `backlog.py move TASK-N in-progress`. Keep one task in progress at
   a time.
 - Work the user asks for that isn't in the backlog and takes more than a few steps gets a task
@@ -24,13 +27,15 @@ for the formats, and use its script rather than reading folders by hand.
 - Tick acceptance criteria and record findings in the task's Notes as you go.
 - When every criterion is met and verified, run `backlog.py move TASK-N done` and commit the move
   with the change. If something couldn't be verified, leave the task in progress and say why in
-  its Notes.
+  its Notes. Tasks that won't be done go to `discarded`, with the reason in their Notes.
 - Put follow-up work in new tasks (`--state draft` when unclear) instead of widening the current one.
-- Before changing an area, read its decisions (`backlog.py decisions`, `backlog.py show DECISION-N`).
-  Don't work against an accepted decision. If one needs to change, ask the user, then record a new
-  decision that supersedes it.
-- Record every decision that constrains future work with `backlog.py decide`, including the
-  user's answers to open questions.
+- Only **accepted** decisions are valid for agent work. Before changing an area, read its accepted
+  decisions (`backlog.py decisions --status accepted`, `backlog.py show DECISION-N`) and don't work
+  against them. Proposed and deprecated decisions are not binding.
+- Record choices that constrain future work with `backlog.py decide`. It creates them as
+  **proposed**, which agents may do on their own. Accept a decision (`backlog.py accept`) only when
+  the user made or approved it; their answer to your question counts. To change an accepted
+  decision, ask the user, record the new one, and deprecate the old one with `--replaced-by`.
 - Run `backlog.py check` before committing backlog changes.
 - High-level goals live in [devbacklog/roadmap.md](devbacklog/roadmap.md). Label every task with
   its phase (`phase-0` … `phase-3`).
