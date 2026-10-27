@@ -1,0 +1,29 @@
+# Let the favorites grid grow past 10 shortcuts and 5 columns.
+#
+# Chromium caps custom shortcuts at 10 on desktop and lays them out in at most
+# 5 columns. Pantera's New Tab page allows 48 and up to 8 columns, adding rows
+# as needed. See devbacklog TASK-23.
+
+--- a/components/ntp_tiles/constants.cc
++++ b/components/ntp_tiles/constants.cc
+@@ -11,7 +11,8 @@ namespace ntp_tiles {
+ #if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
+ const size_t kMaxNumCustomLinks = 8;
+ #else
+-const size_t kMaxNumCustomLinks = 10;
++// Pantera's New Tab page grid grows with the user's favorites.
++const size_t kMaxNumCustomLinks = 48;
+ #endif
+ 
+ // If custom links are enabled, an additional tile may be returned making up to
+--- a/ui/webui/resources/cr_components/most_visited/most_visited.ts
++++ b/ui/webui/resources/cr_components/most_visited/most_visited.ts
+@@ -799,7 +799,7 @@ export class MostVisitedElement extends MostVisitedElementBase {
+             getComputedStyle(this).getPropertyValue('--most-visited-tile-size'),
+             10) ||
+         112;
+-    const maxColumnCount = this.singleRow ? 10 : 5;
++    const maxColumnCount = this.singleRow ? 10 : 8;
+     for (let i = maxColumnCount; i >= 4; i--) {
+       const query = `(min-width: ${tileSize * (i + 1)}px)`;
+       const queryList = this.windowProxy_.matchMedia(query);

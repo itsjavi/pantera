@@ -1,0 +1,71 @@
+# Let users edit their favorites on the New Tab page.
+#
+# Without Google as the search engine, Chromium's New Tab page is
+# chrome://new-tab-page-third-party, whose shortcut tiles can be added, edited,
+# removed and reordered, but the page turns on only most visited tiles and
+# gives the editing dialogs and messages empty strings. This turns on custom
+# shortcuts instead and gives them the full New Tab page's strings. See
+# devbacklog TASK-23.
+
+--- a/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_ui.cc
++++ b/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_ui.cc
+@@ -70,6 +70,15 @@ void CreateAndAddNewTabPageThirdPartyUiHtmlSource(Profile* profile,
+                                            IDS_UNDO_DESCRIPTION,
+                                            undo_accelerator.GetShortcutText()));
+   static constexpr webui::LocalizedString kStrings[] = {
++      {"addLinkTitle", IDS_NTP_CUSTOM_LINKS_ADD_SHORTCUT_TITLE},
++      {"editLinkTitle", IDS_NTP_CUSTOM_LINKS_EDIT_SHORTCUT},
++      {"invalidUrl", IDS_NTP_CUSTOM_LINKS_INVALID_URL},
++      {"linkAddedMsg", IDS_NTP_CONFIRM_MSG_SHORTCUT_ADDED},
++      {"linkCancel", IDS_NTP_CUSTOM_LINKS_CANCEL},
++      {"linkCantCreate", IDS_NTP_CUSTOM_LINKS_CANT_CREATE},
++      {"linkCantEdit", IDS_NTP_CUSTOM_LINKS_CANT_EDIT},
++      {"linkDone", IDS_NTP_CUSTOM_LINKS_DONE},
++      {"linkEditedMsg", IDS_NTP_CONFIRM_MSG_SHORTCUT_EDITED},
+       {"linkRemove", IDS_NTP_CUSTOM_LINKS_REMOVE},
+       {"linkRemoveA11y", IDS_NTP_MOST_VISITED_SITES_REMOVE},
+       {"linkRemovedMsg", IDS_NTP_CONFIRM_MSG_SHORTCUT_REMOVED},
+@@ -82,6 +91,11 @@ void CreateAndAddNewTabPageThirdPartyUiHtmlSource(Profile* profile,
+        IDS_NTP_MOST_VISITED_SHORTCUTS_INACTIVITY_REMOVAL},
+       {"moduleInactivityRemovalMsg", IDS_NTP_MODULE_INACTIVITY_REMOVAL},
+       {"modulesInactivityRemovalMsg", IDS_NTP_MODULES_INACTIVITY_REMOVAL},
++      {"nameField", IDS_NTP_CUSTOM_LINKS_NAME},
++      {"restoreDefaultLinks", IDS_NTP_CONFIRM_MSG_RESTORE_DEFAULTS},
++      {"shortcutAlreadyExists", IDS_NTP_CUSTOM_LINKS_ALREADY_EXISTS},
++      {"shortcutMoreActions", IDS_NTP_CUSTOM_LINKS_MORE_ACTIONS},
++      {"urlField", IDS_NTP_CUSTOM_LINKS_URL},
+   };
+ 
+   source->AddLocalizedStrings(kStrings);
+@@ -138,23 +152,6 @@ void CreateAndAddNewTabPageThirdPartyUiHtmlSource(Profile* profile,
+                      base::FeatureList::IsEnabled(
+                          ntp_features::kNtpMostVisitedHighDpiFavicons));
+ 
+-  // Needed by <cr-most-visited> but not used in
+-  // chrome://new-tab-page-third-party/.
+-  source->AddString("addLinkTitle", "");
+-  source->AddString("editLinkTitle", "");
+-  source->AddString("invalidUrl", "");
+-  source->AddString("linkAddedMsg", "");
+-  source->AddString("linkCancel", "");
+-  source->AddString("linkCantCreate", "");
+-  source->AddString("linkCantEdit", "");
+-  source->AddString("linkDone", "");
+-  source->AddString("linkEditedMsg", "");
+-  source->AddString("shortcutMoreActions", "");
+-  source->AddString("nameField", "");
+-  source->AddString("restoreDefaultLinks", "");
+-  source->AddString("shortcutAlreadyExists", "");
+-  source->AddString("urlField", "");
+-
+   webui::SetupWebUIDataSource(
+       source, kNewTabPageThirdPartyResources,
+       IDR_NEW_TAB_PAGE_THIRD_PARTY_NEW_TAB_PAGE_THIRD_PARTY_HTML);
+@@ -233,6 +230,6 @@ void NewTabPageThirdPartyUI::CreatePageHandler(
+           navigation_start_time_ticks_),
+       navigation_start_time_);
+   most_visited_page_handler_->EnableTileTypes(
+-      ntp_tiles::MostVisitedSites::EnableTileTypesOptions().with_top_sites(
++      ntp_tiles::MostVisitedSites::EnableTileTypesOptions().with_custom_links(
+           true));
+ }

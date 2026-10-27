@@ -1,0 +1,22 @@
+# Start the New Tab page's favorites empty instead of from history.
+#
+# Before the user customizes them, Chromium fills custom shortcuts with the
+# most visited sites from browsing history, and the first edit keeps those.
+# Pantera's favorites are only what the user adds, so history never shows on
+# the New Tab page. See devbacklog TASK-23.
+
+--- a/components/ntp_tiles/most_visited_sites.cc
++++ b/components/ntp_tiles/most_visited_sites.cc
+@@ -1072,8 +1072,10 @@ bool MostVisitedSites::ShouldAddHomeTile() const {
+ }
+ 
+ bool MostVisitedSites::ShouldQueryTopSites() const {
+-  return IsTopSitesEnabled() ||
+-         (IsCustomLinksEnabled() && !IsCustomLinksInitialized());
++  // Pantera: shortcuts are the user's favorites only. Until they add one, the
++  // list is empty instead of filled from browsing history, and the first one
++  // starts an empty list.
++  return IsTopSitesEnabled();
+ }
+ 
+ void MostVisitedSites::AddToHostsAndTotalCount(const NTPTilesVector& new_tiles,
