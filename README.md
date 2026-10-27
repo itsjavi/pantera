@@ -46,7 +46,8 @@ Pantera is a set of patches and files applied to Chromium's source at build time
 1. `build.sh` downloads Chromium's source for the version in `ungoogled-chromium/chromium_version.txt`.
 2. It applies ungoogled-chromium's patches, the macOS patches in `patches/ungoogled-chromium/` and
    Pantera's own patches in `patches/pantera/`, in the order listed in `patches/series`.
-3. It copies `branding/overlay/` over the source (product name, bundle ID, icons).
+3. It copies `branding/overlay/` over the source (product name, bundle ID, icons) and renames
+   Chromium to Pantera in the UI strings and their translations.
 4. It builds with the flags in `ungoogled-chromium/flags.gn` and `flags.macos.gn`, then signs and
    packages a `.dmg` with `sign_and_package_app.sh`.
 

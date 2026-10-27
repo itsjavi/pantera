@@ -19,7 +19,9 @@ repository root. It is git-ignored. Don't leave scratch files anywhere else in t
   replacements that patches can't carry.
 - `branding/AppIcon.icon/`: Icon Composer source of the app icon.
 - `scripts/`: `make-icon.swift` draws the icon layers, `build-branding.sh` regenerates every
-  branding asset, `preview-icons.swift` renders a built app's icon beside system apps.
+  branding asset, `preview-icons.swift` renders a built app's icon beside system apps, and
+  `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
+  rekeys their translations.
 
 ## Upstream
 
@@ -64,11 +66,13 @@ A full Chromium build takes hours and about 100–150 GB of disk, so don't start
   version into `.local/` (`https://chromium.googlesource.com/chromium/src/+/refs/tags/<version>/<path>?format=TEXT`,
   base64-encoded) and run `patch --dry-run -p1` there.
 - Icon: run `scripts/build-branding.sh`, then look at `branding/icon-light.png` and `branding/icon-dark.png`.
+- String rename: download `tools/grit` (`https://chromium.googlesource.com/chromium/src/+archive/refs/tags/<version>/tools/grit.tar.gz`),
+  the two branded `.grd` files, `settings_chromium_strings.grdp` and their `.xtb` translations
+  into `.local/`, keeping Chromium's paths, then run `scripts/rebrand_strings.py` on that folder.
+  Check that every translation ID that matched a message before still matches one after.
 
 ## Known gaps (Phase 0)
 
-- The profile folder is still `~/Library/Application Support/Chromium`. Set `CrProductDirName` in
-  `chrome/app/app-Info.plist` with a patch.
-- The keychain item is still "Chromium Safe Storage", and UI strings still say "Chromium"
-  (`chrome/app/chromium_strings.grd`).
+- Inflected forms of "Chromium" stay in 11 languages (az, bs, da, et, fi, hr, hu, no, sl, sv, uz),
+  e.g. Finnish "Chromiumin". Fixing them needs per-language replacements.
 - No auto-updates (Sparkle) and no CI yet.
