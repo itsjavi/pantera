@@ -29,6 +29,17 @@
   "groups": [
     {
       "layers": [
+        {
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": { "solid": "extended-srgb:0.10196,0.10980,0.12549,1.00000" }
+            }
+          ],
+          "glass": false,
+          "image-name": "whiskers.png",
+          "name": "whiskers"
+        },
         { "glass": true, "image-name": "eye.png", "name": "eye" },
         {
           "fill-specializations": [

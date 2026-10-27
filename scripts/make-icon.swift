@@ -57,7 +57,7 @@ func fromPhoto(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
 func headPath() -> NSBezierPath {
     // Cubic segments in photo coordinates: end, control 1, control 2.
     let segments: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-        (850, 1460, 660, 1820, 800, 1560),   // chest, up to the throat
+        (850, 1460, 790, 1850, 830, 1600),   // chest, up to the throat
         (590, 1535, 780, 1530, 680, 1550),   // jaw, underside
         (515, 1455, 540, 1530, 515, 1490),   // chin
         (432, 1302, 476, 1420, 436, 1356),   // upper lip
@@ -69,16 +69,55 @@ func headPath() -> NSBezierPath {
         (985, 500, 880, 580, 950, 520),      // crown
         (1086, 326, 1010, 440, 1062, 366),   // near ear, front
         (1190, 470, 1110, 340, 1166, 410),   // near ear, back
-        (1800, 1300, 1270, 640, 1460, 960),  // back of the neck
+        (1246, 660, 1214, 520, 1244, 590),   // back of the skull
+        (1330, 2100, 1222, 980, 1310, 1580), // nape, down the back of the neck
     ]
     let path = NSBezierPath()
-    path.move(to: fromPhoto(540, 2100))
+    path.move(to: fromPhoto(762, 2100))
     for s in segments {
         path.curve(to: fromPhoto(s.0, s.1), controlPoint1: fromPhoto(s.2, s.3), controlPoint2: fromPhoto(s.4, s.5))
     }
-    path.line(to: fromPhoto(1800, 2100))
     path.close()
     return path
+}
+
+/// A hair-like line along a cubic curve, tapering from `width` at its root to a point.
+func taperedCurve(_ p0: NSPoint, _ c1: NSPoint, _ c2: NSPoint, _ p1: NSPoint, width: CGFloat) -> NSBezierPath {
+    func point(_ t: CGFloat) -> NSPoint {
+        let u = 1 - t
+        let a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t
+        let x = a * p0.x + b * c1.x + c * c2.x + d * p1.x
+        let y = a * p0.y + b * c1.y + c * c2.y + d * p1.y
+        return NSPoint(x: x, y: y)
+    }
+    let steps = 64
+    var left: [NSPoint] = [], right: [NSPoint] = []
+    for i in 0...steps {
+        let t = CGFloat(i) / CGFloat(steps)
+        let p = point(t), ahead = point(min(t + 0.01, 1)), behind = point(max(t - 0.01, 0))
+        let dx = ahead.x - behind.x, dy = ahead.y - behind.y
+        let length = max(hypot(dx, dy), 0.0001), half = width * (1 - t) / 2
+        left.append(NSPoint(x: p.x - dy / length * half, y: p.y + dx / length * half))
+        right.append(NSPoint(x: p.x + dy / length * half, y: p.y - dx / length * half))
+    }
+    let path = NSBezierPath()
+    path.move(to: left[0])
+    for p in left.dropFirst() { path.line(to: p) }
+    for p in right.reversed() { path.line(to: p) }
+    path.close()
+    return path
+}
+
+/// Long whiskers fanning back from the muzzle across the cheek, as in the photo.
+func whiskerPaths() -> [NSBezierPath] {
+    let whiskers: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
+        (600, 1298, 760, 1226, 920, 1196, 1080, 1212),  // upper
+        (606, 1324, 770, 1288, 940, 1288, 1110, 1318),  // middle
+        (612, 1350, 770, 1352, 930, 1384, 1080, 1432),  // lower
+    ]
+    return whiskers.map { w in
+        taperedCurve(fromPhoto(w.0, w.1), fromPhoto(w.2, w.3), fromPhoto(w.4, w.5), fromPhoto(w.6, w.7), width: 12)
+    }
 }
 
 /// An almond eye between its two corners in the photo, enlarged so it reads at small sizes.
@@ -106,8 +145,12 @@ func pupilPath() -> NSBezierPath {
 }
 
 // icon.json lists these front to back: its first layer is drawn on top.
-// The head is drawn in its light-appearance color; icon.json overrides it for dark.
+// The head and whiskers are drawn in their light-appearance colors; icon.json overrides them
+// for dark.
 let layers: [(String, NSBitmapImageRep)] = [
+    ("whiskers", bitmap {
+        for whisker in whiskerPaths() { fill(whisker, "#ECEEF1", "#ECEEF1") }
+    }),
     ("eye", bitmap {
         fill(eyePath(), "#FFD84D", "#F2A516")
         fill(pupilPath(), "#050506", "#000000")
