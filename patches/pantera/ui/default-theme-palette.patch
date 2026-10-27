@@ -1,0 +1,119 @@
+# Make Pantera's palette the default theme.
+#
+# Chromium's default theme is Google's hard-coded palette: a blue primary and
+# slightly tinted grays. Pantera's (DECISION-8, devbacklog TASK-22) uses
+# Pantera's amber (#F2A516) as the primary color, at the seed's own chroma,
+# over zero-chroma grays, and darkens dark mode to charcoal. It replaces the
+# baseline palette, so it's the "Default" theme in the color picker and what
+# new profiles get; other picker colors are unchanged.
+
+--- a/ui/color/ref_color_mixer.cc
++++ b/ui/color/ref_color_mixer.cc
+@@ -4,7 +4,9 @@
+ 
+ #include "ui/color/ref_color_mixer.h"
+ 
++#include <array>
+ #include <memory>
++#include <utility>
+ 
+ #include "base/feature_list.h"
+ #include "base/logging.h"
+@@ -180,13 +182,39 @@ void AddBaselinePalette(ColorProvider* provider,
+   }
+ }
+ 
+-// Adds the dynamic color palette tokens based on user_color. This is the base
+-// palette so it is independent of ColorMode.
+-void AddGeneratedPalette(ColorProvider* provider,
+-                         SkColor seed_color,
+-                         ColorProviderKey::SchemeVariant variant) {
+-  std::unique_ptr<Palette> palette = GeneratePalette(seed_color, variant);
++// Pantera's default palette (DECISION-8): Pantera's amber, at its own chroma,
++// over zero-chroma neutrals. Secondary, tertiary and error follow Tonal
++// Spot.
++class PanteraPalette : public Palette {
++ public:
++  static constexpr SkColor kSeed = SkColorSetRGB(0xF2, 0xA5, 0x16);
++
++  PanteraPalette()
++      : tonal_spot_(GeneratePalette(
++            kSeed,
++            ColorProviderKey::SchemeVariant::kTonalSpot)),
++        primary_(kSeed),
++        neutral_(0.0, 0.0) {}
+ 
++  const TonalPalette& primary() const override { return primary_; }
++  const TonalPalette& secondary() const override {
++    return tonal_spot_->secondary();
++  }
++  const TonalPalette& tertiary() const override {
++    return tonal_spot_->tertiary();
++  }
++  const TonalPalette& neutral() const override { return neutral_; }
++  const TonalPalette& neutral_variant() const override { return neutral_; }
++  const TonalPalette& error() const override { return tonal_spot_->error(); }
++
++ private:
++  std::unique_ptr<Palette> tonal_spot_;
++  TonalPalette primary_;
++  TonalPalette neutral_;
++};
++
++// Adds the ref color tokens from `palette`.
++void AddPalette(ColorProvider* provider, const Palette* palette) {
+   ColorMixer& mixer = provider->AddMixer();
+   mixer[kColorRefPrimary0] = {palette->primary().get(0)};
+   mixer[kColorRefPrimary10] = {palette->primary().get(10)};
+@@ -293,6 +321,42 @@ void AddGeneratedPalette(ColorProvider* provider,
+   mixer[kColorRefNeutralVariant100] = {palette->neutral_variant().get(100)};
+ }
+ 
++// Adds the dynamic color palette tokens based on user_color. This is the base
++// palette so it is independent of ColorMode.
++void AddGeneratedPalette(ColorProvider* provider,
++                         SkColor seed_color,
++                         ColorProviderKey::SchemeVariant variant) {
++  AddPalette(provider, GeneratePalette(seed_color, variant).get());
++}
++
++// Adds Pantera's default palette. Dark mode is charcoal (DECISION-8): neutral
++// tones up to 25 are halved, then ease back to their own value at 40, so the
++// tab strip, toolbar and pages are near black but still apart.
++void AddPanteraPalette(ColorProvider* provider,
++                       ColorProviderKey::ColorMode color_mode) {
++  const PanteraPalette palette;
++  AddPalette(provider, &palette);
++  if (color_mode != ColorProviderKey::ColorMode::kDark) {
++    return;
++  }
++
++  static constexpr auto kDarkNeutrals =
++      std::to_array<std::pair<ColorId, float>>({
++          {kColorRefNeutral4, 4},   {kColorRefNeutral6, 6},
++          {kColorRefNeutral8, 8},   {kColorRefNeutral10, 10},
++          {kColorRefNeutral12, 12}, {kColorRefNeutral15, 15},
++          {kColorRefNeutral17, 17}, {kColorRefNeutral20, 20},
++          {kColorRefNeutral22, 22}, {kColorRefNeutral24, 24},
++          {kColorRefNeutral25, 25}, {kColorRefNeutral30, 30},
++      });
++  ColorMixer& mixer = provider->AddMixer();
++  for (const auto& [id, tone] : kDarkNeutrals) {
++    const float charcoal =
++        tone <= 25 ? tone / 2 : 12.5f + (tone - 25) * 27.5f / 15;
++    mixer[id] = {palette.neutral().get(charcoal)};
++  }
++}
++
+ void AddRefColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
+   // Typically user_color should always be set when the source has been set to
+   // kAccent, however there may still be cases when this can occur (e.g. failing
+@@ -302,7 +366,7 @@ void AddRefColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
+   if (!key.user_color.has_value() ||
+       key.user_color_source == ColorProviderKey::UserColorSource::kBaseline ||
+       key.user_color_source == ColorProviderKey::UserColorSource::kGrayscale) {
+-    AddBaselinePalette(provider, key.color_mode);
++    AddPanteraPalette(provider, key.color_mode);
+   } else {
+     // The default value for schemes is Tonal Spot.
+     auto variant = key.scheme_variant.value_or(

@@ -1,0 +1,20 @@
+# Turn on WebUI Refresh 2026 so WebUI pages follow the browser theme.
+#
+# In Chromium 156, Settings loads the theme's colors (chrome://theme/colors.css)
+# only with this feature; without it, Settings uses Google's fixed blue and
+# grays, so Pantera's default theme (DECISION-8) stopped at the browser frame.
+# With it, Settings, Passwords, Certificates and Management follow the theme.
+# See devbacklog TASK-22.
+
+--- a/chrome/browser/ui/ui_features.cc
++++ b/chrome/browser/ui/ui_features.cc
+@@ -77,7 +77,8 @@ BASE_FEATURE_PARAM(bool,
+                    true);
+ BASE_FEATURE(kMenuSimplification, base::FEATURE_DISABLED_BY_DEFAULT);
+ BASE_FEATURE(kTabGroupColorRefresh, base::FEATURE_DISABLED_BY_DEFAULT);
+-BASE_FEATURE(kWebuiRefresh2026, base::FEATURE_DISABLED_BY_DEFAULT);
++// Pantera: enabled so WebUI pages such as Settings load the theme's colors.
++BASE_FEATURE(kWebuiRefresh2026, base::FEATURE_ENABLED_BY_DEFAULT);
+ BASE_FEATURE(kAppMenuGlowUp, base::FEATURE_DISABLED_BY_DEFAULT);
+ // Enables the redesigned Settings 2026 refresh features and search UX.
+ BASE_FEATURE(kSettingsRefresh2026, base::FEATURE_DISABLED_BY_DEFAULT);

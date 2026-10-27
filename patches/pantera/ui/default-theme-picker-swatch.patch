@@ -1,0 +1,40 @@
+# Show Pantera's amber in the color picker's Default and Grey swatches.
+#
+# The swatches are hard-coded to Google's blue. Pantera's default theme
+# (DECISION-8, devbacklog TASK-22) is amber, so they show its primary tones:
+# 40 and 90 in light mode, 80 and 30 in dark mode.
+
+--- a/ui/webui/resources/cr_components/theme_color_picker/color_utils.ts
++++ b/ui/webui/resources/cr_components/theme_color_picker/color_utils.ts
+@@ -29,25 +29,25 @@ export const DARK_DEFAULT_COLOR: Color = {
+ };
+ 
+ export const LIGHT_BASELINE_BLUE_COLOR: Color = {
+-  background: {value: 0xff0b57d0},
+-  foreground: {value: 0xffd3e3fd},
++  background: {value: 0xff815500},
++  foreground: {value: 0xffffddb2},
+   base: {value: 0xffc7c7c7},
+ };
+ 
+ export const DARK_BASELINE_BLUE_COLOR: Color = {
+-  background: {value: 0xffa8c7fa},
+-  foreground: {value: 0xff0842a0},
++  background: {value: 0xffffb94d},
++  foreground: {value: 0xff624000},
+   base: {value: 0xff757575},
+ };
+ 
+ export const LIGHT_BASELINE_GREY_COLOR: Color = {
+-  background: {value: 0xff0b57d0},
++  background: {value: 0xff815500},
+   foreground: {value: 0xffe3e3e3},
+   base: {value: 0xffc7c7c7},
+ };
+ 
+ export const DARK_BASELINE_GREY_COLOR: Color = {
+-  background: {value: 0xffa8c7fa},
++  background: {value: 0xffffb94d},
+   foreground: {value: 0xff474747},
+   base: {value: 0xff757575},
+ };

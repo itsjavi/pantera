@@ -1,0 +1,22 @@
+# Use the default theme's primary color for focus rings on macOS.
+#
+# With no theme color chosen, Chromium on macOS colors focus rings with the
+# system keyboard focus color, mapped to the nearest Google blue, so Pantera's
+# amber default theme (DECISION-8) kept blue focus rings in native UI and WebUI
+# pages. This keeps the theme's own focus ring color (its primary). Text
+# selection still follows the macOS highlight color. See devbacklog TASK-22.
+
+--- a/ui/color/mac/native_color_mixers_mac.mm
++++ b/ui/color/mac/native_color_mixers_mac.mm
+@@ -134,9 +134,8 @@ void AddNativeUiColorMixer(ColorProvider* provider,
+     mixer[kColorTableBackgroundAlternate] = {
+         NSSystemColorToSkColor(NSColor.alternatingContentBackgroundColors[1])};
+     if (!key.user_color.has_value()) {
+-      mixer[kColorSysStateFocusRing] = PickGoogleColor(
+-          NSSystemColorToSkColor(NSColor.keyboardFocusIndicatorColor),
+-          kColorSysBase, color_utils::kMinimumVisibleContrastRatio);
++      // Pantera: focus rings keep the default theme's primary color
++      // (DECISION-8) instead of the macOS keyboard focus color.
+ 
+       const SkColor system_highlight_color =
+           NSSystemColorToSkColor(NSColor.selectedTextBackgroundColor);

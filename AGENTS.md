@@ -57,6 +57,8 @@ for the formats, and use its script rather than reading folders by hand.
   branding asset, `preview-icons.swift` renders a built app's icon beside system apps, and
   `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
   rekeys their translations.
+  `recolor-favicons.swift` recolors Chromium's blue page favicons in Pantera's amber, into
+  `branding/overlay/`.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
 

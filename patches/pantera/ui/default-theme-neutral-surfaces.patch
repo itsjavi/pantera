@@ -1,0 +1,25 @@
+# Keep the default theme's surfaces neutral.
+#
+# Chromium tints the light-mode tab strip, dividers and numbered surfaces
+# (menus, dialogs, cards) with blue or the primary color. Pantera's default
+# theme (DECISION-8, devbacklog TASK-22) uses the Grey theme's neutral surface
+# overrides instead, but keeps the primary color for text on surfaces.
+
+--- a/ui/color/sys_color_mixer.cc
++++ b/ui/color/sys_color_mixer.cc
+@@ -409,6 +409,15 @@ void AddSysColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
+                  ColorProviderKey::UserColorSource::kAccent &&
+              key.user_color.has_value()) {
+     AddThemedSysColorOverrides(mixer, key);
++  } else {
++    // Pantera's default theme keeps Chrome surfaces neutral, as Grey does, but
++    // keeps its primary color for text on surfaces (DECISION-8). Numbered
++    // surfaces (menus, dialogs, cards) lose their blue tint.
++    AddGrayscaleSysColorOverrides(mixer, key);
++    mixer[kColorSysOnSurfacePrimary] = {dark_mode ? kColorRefPrimary90
++                                                  : kColorRefPrimary10};
++    mixer[kColorSysSurfaceNumberedForeground] = {
++        dark_mode ? kColorRefNeutral90 : kColorRefNeutral60};
+   }
+ }
+ 

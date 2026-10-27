@@ -29,3 +29,8 @@ pantera/macos/set-keychain-item-name.patch
 pantera/extensions/restore-web-store-installs.patch
 pantera/extensions/harden-web-store-pages.patch
 pantera/extensions/update-extensions-on-click.patch
+pantera/ui/default-theme-palette.patch
+pantera/ui/default-theme-neutral-surfaces.patch
+pantera/ui/default-theme-picker-swatch.patch
+pantera/ui/default-theme-webui-colors.patch
+pantera/ui/default-theme-focus-ring.patch
