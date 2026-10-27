@@ -23,12 +23,25 @@ at all.
 ## Principles
 
 - **No Google services.** Inherited from [ungoogled-chromium](https://github.com/ungoogled-software/ungoogled-chromium):
-  no Safe Browsing, sync, translation or other requests to Google.
+  no Safe Browsing, sync, translation or other requests to Google. The one exception is the
+  Chrome Web Store, and only when you use it (see [Extensions](#extensions)).
 - **Nothing phones home.** No usage statistics, crash reports or "daily active user" pings, opt-in
   or otherwise.
 - **Private by default.** Protections are on out of the box. Anything that contacts a server
   (for example, filter list updates) is documented and can be turned off.
 - **Small patch set.** Pantera stays close to upstream so Chromium security fixes ship quickly.
+
+## Extensions
+
+Install extensions from the [Chrome Web Store](https://chromewebstore.google.com) with "Add to
+Chrome", as in Chrome or Brave.
+
+Extensions don't update in the background. To update them, open `chrome://extensions`, turn on
+**Developer mode** and press **Update**. Each check tells Google's update server your IP address
+and the list of installed store extensions, so Pantera only checks when you ask, and sends no
+usage pings. An opt-in setting for automatic updates is planned.
+
+Pantera contacts Google only when you visit the store, install an extension, or press Update.
 
 ## Roadmap
 

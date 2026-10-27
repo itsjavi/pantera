@@ -45,7 +45,10 @@ for the formats, and use its script rather than reading folders by hand.
 - `ungoogled-chromium/`: git submodule, pinned to the commit upstream macOS uses. Never edit it.
 - `patches/series`: patch order. Upstream's macOS patches first, then Pantera's.
 - `patches/ungoogled-chromium/macos/`: upstream's macOS patches. Edit only during an upstream sync.
-- `patches/pantera/`: Pantera's patches to Chromium.
+- `patches/pantera/`: Pantera's patches to Chromium, by area (`macos/`, `extensions/`).
+- `domain-substitution-exclusions.list`: files `build.sh` keeps out of ungoogled-chromium's domain
+  substitution, each with its reason. Add to it only when a feature needs a real Google domain,
+  and check the file has no other Google URLs that matter.
 - `branding/overlay/`: files copied over Chromium's source after patching, mirroring its tree
   (`BRANDING`, `Assets.car`, `app.icns`, product logos). Use it for binary files and whole-file
   replacements that patches can't carry.
