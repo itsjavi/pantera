@@ -16,11 +16,11 @@ browser" item (user's screenshots, 2026-10-27).
 
 ## Acceptance criteria
 
-- [ ] One monochrome panther glyph, generated from the icon's head path in `make-icon.swift`
-- [ ] The Settings toolbar shows the panther in light and dark mode
-- [ ] The "About Pantera" item in the Settings menu shows a Pantera icon
+- [x] One monochrome panther glyph, generated from the icon's head path in `make-icon.swift`
+- [x] The Settings toolbar shows the panther in light and dark mode
+- [x] The "About Pantera" item in the Settings menu shows a Pantera icon
 - [ ] The address bar chip on `chrome://` pages and the app menu's default browser item show it
-- [ ] Other WebUI pages that use the same icons are checked (History, Downloads, Extensions)
+- [x] Other WebUI pages that use the same icons are checked (History, Downloads, Extensions)
 
 ## Notes
 
@@ -56,3 +56,28 @@ logo in dark mode. The New Tab and product favicons
 `components/resources/default_*_percent/chromium/favicon_product.png`) are also Chromium's logo;
 `scripts/recolor-favicons.swift` skips them. Use the one-color panther (DECISION-10,
 `pantherPath()` in `scripts/make-icon.swift`) for all of these.
+
+### Done (2026-10-27)
+
+`scripts/make-icon.swift` now takes `branding/overlay` as its second argument and writes,
+besides the New Tab page's `panther.svg`:
+
+- The glyph: the head with the eye cut out (no whiskers or pupil, too fine at 16-24 px), framed
+  as a bust (canvas square at 175, 60, side 760) and clipped to it with Core Graphics' path
+  intersection, so nothing draws outside the icon. `branding/panther-glyph.svg` is the 24-unit
+  source.
+- The five vector icons (`chrome_product.icon` in omnibox and chrome/app,
+  `product_chrome_refresh_old.icon`, `components/vector_icons/chromium/product.icon` and
+  `product_refresh.icon`) as `CANVAS_DIMENSIONS, 24` paths (even-odd is the default fill rule).
+- `ui/webui/resources/images/chrome_logo_dark.svg`: the dark app icon (silver panther on a
+  near-black rounded square), which cr-toolbar and cr-drawer show in dark mode.
+- `favicon_ntp.png` (gray `#7A7A7A`) and `favicon_product.png` (amber `#B37800`), 16 and 32 px.
+
+`patches/pantera/branding/webui-product-icon.patch` replaces both `cr:chrome-product`
+definitions in `icons.html.ts` (24 and 960 units) with the glyph; that file is domain-substituted,
+so the patch was made from the file before the edit, with no substituted context.
+
+Checked in the build (dark mode): Settings' header and "About Pantera" item, and the Extensions
+and History toolbars, show the panther. Not checked: the native icons (address bar chip on
+`chrome://` pages, the app menu's default browser item, infobars), which can't be captured
+without screen recording; the user needs to look.

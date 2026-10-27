@@ -11,8 +11,7 @@ _branding="$_root_dir/branding"
 _theme="$_branding/overlay/chrome/app/theme"
 _ictool="$(xcode-select -p)/../Applications/Icon Composer.app/Contents/Executables/ictool"
 
-swift "$_root_dir/scripts/make-icon.swift" "$_branding/AppIcon.icon" \
-  "$_branding/overlay/chrome/browser/resources/new_tab_page_third_party"
+swift "$_root_dir/scripts/make-icon.swift" "$_branding/AppIcon.icon" "$_branding/overlay"
 
 # Compile the Icon Composer icon into a Liquid Glass asset catalog plus a flat .icns
 # fallback. Chromium's Info.plist already names them: CFBundleIconName=AppIcon and

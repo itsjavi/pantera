@@ -53,12 +53,12 @@ for the formats, and use its script rather than reading folders by hand.
   (`BRANDING`, `Assets.car`, `app.icns`, product logos). Use it for binary files and whole-file
   replacements that patches can't carry.
 - `branding/AppIcon.icon/`: Icon Composer source of the app icon.
-- `scripts/`: `make-icon.swift` draws the icon layers, `build-branding.sh` regenerates every
+- `scripts/`: `make-icon.swift` draws the icon layer and the panther for Chromium's UI (New Tab
+  page art, product glyph, dark logo), `build-branding.sh` regenerates every
   branding asset, `preview-icons.swift` renders a built app's icon beside system apps, and
   `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
-  rekeys their translations.
-  `recolor-favicons.swift` recolors Chromium's blue page favicons in Pantera's amber, into
-  `branding/overlay/`.
+  rekeys their translations. `recolor-favicons.swift` recolors Chromium's blue page favicons in
+  Pantera's amber, into `branding/overlay/`.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
 - `VERSION`: Pantera's own version (DECISION-9). `build.sh` passes it to Chromium through the

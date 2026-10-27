@@ -1,7 +1,7 @@
 #!/usr/bin/env swift
 // Draws the layer of Pantera's app icon (AppIcon.icon/Assets/head.png) on a 1024 pt canvas: a
 // one-color panther (DECISION-10).
-// Usage: swift scripts/make-icon.swift branding/AppIcon.icon [<svg output folder>]
+// Usage: swift scripts/make-icon.swift branding/AppIcon.icon [branding/overlay]
 // The .icon's icon.json sets the background, glass, and the dark-appearance colors (the head
 // turns silver on a near-black background). Edit it by hand or in Icon Composer; this script
 // only rewrites Assets/. scripts/build-branding.sh runs it and compiles the result.
@@ -167,33 +167,152 @@ for (name, rep) in layers {
 }
 print("Wrote \(layers.count) layers to \(assets.path)")
 
-/// SVG path data for `path`, flipped to SVG's y-down coordinates.
-func svgPathData(_ path: NSBezierPath) -> String {
-    func point(_ p: NSPoint) -> String { String(format: "%.1f %.1f", p.x, canvas - p.y) }
-    var data = "", points = [NSPoint](repeating: .zero, count: 3)
-    for i in 0..<path.elementCount {
-        switch path.element(at: i, associatedPoints: &points) {
-        case .moveTo: data += "M\(point(points[0]))"
-        case .lineTo: data += "L\(point(points[0]))"
-        case .cubicCurveTo: data += "C\(point(points[0])) \(point(points[1])) \(point(points[2]))"
-        case .quadraticCurveTo: data += "Q\(point(points[0])) \(point(points[1]))"
-        case .closePath: data += "Z"
-        @unknown default: fatalError("Unknown path element")
-        }
+/// A square of the canvas, in y-down coordinates, drawn into a `size` × `size` box.
+struct Frame {
+    var x: CGFloat = 0, y: CGFloat = 0, side: CGFloat = canvas, size: CGFloat = canvas
+
+    func map(_ p: NSPoint) -> NSPoint {
+        NSPoint(x: (p.x - x) / side * size, y: (canvas - p.y - y) / side * size)
     }
-    return data
 }
 
-// With a second argument, also write the panther as a one-color SVG (panther.svg) for the UI,
-// where CSS masks it in a theme color.
+/// The elements of `path` with their points mapped into `frame` (y down).
+func elements(_ path: NSBezierPath, _ frame: Frame) -> [(NSBezierPath.ElementType, [NSPoint])] {
+    var points = [NSPoint](repeating: .zero, count: 3)
+    return (0..<path.elementCount).map { i in
+        let type = path.element(at: i, associatedPoints: &points)
+        return (type, points.map(frame.map))
+    }
+}
+
+/// SVG path data for `path` in `frame`.
+func svgPathData(_ path: NSBezierPath, _ frame: Frame = Frame(), digits: Int = 1) -> String {
+    func point(_ p: NSPoint) -> String { String(format: "%.\(digits)f %.\(digits)f", p.x, p.y) }
+    return elements(path, frame).map { type, p in
+        switch type {
+        case .moveTo: return "M\(point(p[0]))"
+        case .lineTo: return "L\(point(p[0]))"
+        case .cubicCurveTo: return "C\(point(p[0])) \(point(p[1])) \(point(p[2]))"
+        case .quadraticCurveTo: return "Q\(point(p[0])) \(point(p[1]))"
+        case .closePath: return "Z"
+        @unknown default: fatalError("Unknown path element")
+        }
+    }.joined()
+}
+
+/// Chromium's vector icon commands (.icon files) for `path` in `frame`. Their default fill rule
+/// is even-odd, like the panther's.
+func iconCommands(_ path: NSBezierPath, _ frame: Frame) -> String {
+    func point(_ p: NSPoint) -> String { String(format: "%.2ff, %.2ff", p.x, p.y) }
+    return elements(path, frame).compactMap { type, p in
+        switch type {
+        case .moveTo: return "MOVE_TO, \(point(p[0])),"
+        case .lineTo: return "LINE_TO, \(point(p[0])),"
+        case .cubicCurveTo: return "CUBIC_TO, \(point(p[0])), \(point(p[1])), \(point(p[2])),"
+        case .closePath: return "CLOSE,"
+        default: fatalError("Unsupported path element")
+        }
+    }.joined(separator: "\n") + "\n"
+}
+
+let glyphFrame = Frame(x: 175, y: 60, side: 760, size: 24)
+
+/// The panther's head with the eye cut out, framed as a bust and clipped to `glyphFrame`: the
+/// glyph that replaces Chromium's logo in small icons. The whiskers and pupil are too fine for
+/// 16–24 px.
+func glyphPath() -> NSBezierPath {
+    let path = NSBezierPath()
+    path.windingRule = .evenOdd
+    path.append(headPath())
+    path.append(eyePath())
+    let frame = CGPath(rect: CGRect(x: glyphFrame.x, y: canvas - glyphFrame.y - glyphFrame.side,
+                                    width: glyphFrame.side, height: glyphFrame.side), transform: nil)
+    let clipped = NSBezierPath(cgPath: path.cgPath.intersection(frame, using: .evenOdd))
+    clipped.windingRule = .evenOdd
+    return clipped
+}
+
+/// Fills `path` (canvas coordinates) into a `size`-pixel square PNG, one color.
+func glyphPNG(_ size: Int, _ hex: String) -> Data {
+    let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size, bitsPerSample: 8, samplesPerPixel: 4,
+        hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    // Canvas (y up) to the glyph's frame in pixels (y up).
+    let scale = CGFloat(size) / glyphFrame.side
+    var transform = AffineTransform(translationByX: -glyphFrame.x, byY: -(canvas - glyphFrame.y - glyphFrame.side))
+    transform.append(AffineTransform(scaleByX: scale, byY: scale))
+    let path = glyphPath()
+    path.transform(using: transform)
+    color(hex).setFill()
+    path.fill()
+    NSGraphicsContext.restoreGraphicsState()
+    return rep.representation(using: .png, properties: [:])!
+}
+
+/// Settings' toolbar logo in dark mode, in the dark app icon's colors (icon.json).
+func darkLogoSVG() -> String {
+    """
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">\
+    <defs><linearGradient id="b" x1="0.3" y1="0" x2="0.7" y2="1">\
+    <stop offset="0" stop-color="#1E2024"/><stop offset="1" stop-color="#08090A"/></linearGradient>\
+    <linearGradient id="p" x1="0" y1="0" x2="0" y2="1">\
+    <stop offset="0" stop-color="#EEF0F3"/><stop offset="1" stop-color="#AEB4BD"/></linearGradient>\
+    <clipPath id="c"><rect x="1" y="1" width="22" height="22" rx="5"/></clipPath></defs>\
+    <rect x="1" y="1" width="22" height="22" rx="5" fill="url(#b)"/>\
+    <path clip-path="url(#c)" fill="url(#p)" fill-rule="evenodd" \
+    d="\(svgPathData(pantherPath(), Frame(x: -43, y: -43, side: 1110, size: 24), digits: 2))"/></svg>
+
+    """
+}
+
+// With a second argument (branding/overlay), also write the panther for Chromium's UI
+// (DECISION-10): the New Tab page's art, the product glyph in vector icons and favicons, and the
+// dark Settings logo. branding/panther-glyph.svg is the glyph for the WebUI icon set patch.
 if CommandLine.arguments.count > 2 {
-    let svgOutput = URL(fileURLWithPath: CommandLine.arguments[2])
-    try FileManager.default.createDirectory(at: svgOutput, withIntermediateDirectories: true)
-    let svg = """
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \(Int(canvas)) \(Int(canvas))">\
-        <path fill-rule="evenodd" d="\(svgPathData(pantherPath()))"/></svg>
+    let overlay = URL(fileURLWithPath: CommandLine.arguments[2])
+    func write(_ data: Data, _ path: String) throws {
+        let url = overlay.appendingPathComponent(path)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: url)
+    }
+    func svg(_ path: NSBezierPath, _ frame: Frame, digits: Int = 1) -> String {
+        """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \(Int(frame.size)) \(Int(frame.size))">\
+        <path fill-rule="evenodd" d="\(svgPathData(path, frame, digits: digits))"/></svg>
 
         """
-    try svg.write(to: svgOutput.appendingPathComponent("panther.svg"), atomically: true, encoding: .utf8)
-    print("Wrote panther.svg to \(svgOutput.path)")
+    }
+
+    try write(Data(svg(pantherPath(), Frame()).utf8),
+              "chrome/browser/resources/new_tab_page_third_party/panther.svg")
+
+    let icon = """
+        // Pantera's panther glyph (DECISION-10), generated by scripts/make-icon.swift.
+
+        CANVAS_DIMENSIONS, 24,
+        \(iconCommands(glyphPath(), glyphFrame))
+        """
+    for path in [
+        "components/omnibox/browser/vector_icons/chrome_product.icon",
+        "components/omnibox/browser/vector_icons/product_chrome_refresh_old.icon",
+        "chrome/app/vector_icons/chrome_product.icon",
+        "components/vector_icons/chromium/product.icon",
+        "components/vector_icons/chromium/product_refresh.icon",
+    ] { try write(Data(icon.utf8), path) }
+
+    try write(Data(darkLogoSVG().utf8), "ui/webui/resources/images/chrome_logo_dark.svg")
+
+    // Favicons of the New Tab page (gray, like Chromium's) and of Chromium's own pages (the
+    // amber of scripts/recolor-favicons.swift).
+    for (scale, size) in [("default_100_percent", 16), ("default_200_percent", 32)] {
+        try write(glyphPNG(size, "#7A7A7A"), "chrome/app/theme/\(scale)/common/favicon_ntp.png")
+        try write(glyphPNG(size, "#B37800"), "components/resources/\(scale)/chromium/favicon_product.png")
+    }
+
+    let branding = URL(fileURLWithPath: iconOutput).deletingLastPathComponent()
+    try Data(svg(glyphPath(), glyphFrame, digits: 2).utf8)
+        .write(to: branding.appendingPathComponent("panther-glyph.svg"))
+    print("Wrote the panther's UI assets to \(overlay.path)")
 }
