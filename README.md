@@ -34,10 +34,13 @@ at all.
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0. Foundation | ungoogled-chromium-macos with Pantera branding, first signed and notarized build | In progress |
+| 0. Foundation | ungoogled-chromium-macos with Pantera branding, Chrome Web Store installs, first signed and notarized build | In progress |
 | 1. Updates and controls | Sparkle auto-updates. A per-site panel for scripts, cookies and HTTPS upgrades | Planned |
 | 2. Content blocking | Brave's [adblock-rust](https://github.com/brave/adblock-rust) engine: request blocking, element hiding, blocked counter, filter lists fetched straight from their maintainers | Planned |
 | 3. More protections | "Forget me when I close this site", fingerprinting protections | Planned |
+
+The detailed goals are in [devbacklog/roadmap.md](devbacklog/roadmap.md) and the work is tracked
+as tasks in [devbacklog/](devbacklog/README.md).
 
 ## How it's built
 

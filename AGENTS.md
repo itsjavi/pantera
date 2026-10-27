@@ -8,6 +8,27 @@ Pantera is a privacy-first Chromium browser for macOS built on ungoogled-chromiu
 Put every temporary file (experiments, renders, downloaded sources, notes) in `.local/` at the
 repository root. It is git-ignored. Don't leave scratch files anywhere else in the repository.
 
+## Backlog
+
+Work is tracked in `devbacklog/`. Read [devbacklog/README.md](devbacklog/README.md) for the task
+format, and use its script rather than reading task folders by hand.
+
+- Start by running `devbacklog/scripts/backlog.py status`.
+- Unless the user asks for something specific, take `devbacklog/scripts/backlog.py next`. If a
+  task's notes contain an open decision, ask the user before building on a guess.
+- Before starting a task, run `backlog.py move TASK-N in-progress`. Keep one task in progress at
+  a time.
+- Work the user asks for that isn't in the backlog and takes more than a few steps gets a task
+  first (`backlog.py new`).
+- Tick acceptance criteria and record findings in the task's Notes as you go.
+- When every criterion is met and verified, run `backlog.py move TASK-N done` and commit the move
+  with the change. If something couldn't be verified, leave the task in progress and say why in
+  its Notes.
+- Put follow-up work in new tasks (`--state draft` when unclear) instead of widening the current one.
+- Run `backlog.py check` before committing backlog changes.
+- High-level goals live in [devbacklog/roadmap.md](devbacklog/roadmap.md). Label every task with
+  its phase (`phase-0` … `phase-3`).
+
 ## Layout
 
 - `ungoogled-chromium/`: git submodule, pinned to the commit upstream macOS uses. Never edit it.
@@ -71,8 +92,4 @@ A full Chromium build takes hours and about 100–150 GB of disk, so don't start
   into `.local/`, keeping Chromium's paths, then run `scripts/rebrand_strings.py` on that folder.
   Check that every translation ID that matched a message before still matches one after.
 
-## Known gaps (Phase 0)
-
-- Inflected forms of "Chromium" stay in 11 languages (az, bs, da, et, fi, hr, hu, no, sl, sv, uz),
-  e.g. Finnish "Chromiumin". Fixing them needs per-language replacements.
-- No auto-updates (Sparkle) and no CI yet.
+Known gaps and planned work are tasks in the backlog (`backlog.py list draft todo`).
