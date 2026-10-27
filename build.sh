@@ -71,6 +71,9 @@ python3 "$_main_repo/utils/domain_substitution.py" apply -r "$_main_repo/domain_
 # Copy Pantera's branding (BRANDING file, app icon, product logos) over the
 # source tree. Binary files can't be carried as patches, so they live here.
 ditto "$_root_dir/branding/overlay" "$_src_dir"
+
+# Rename Chromium to Pantera in the UI strings and rekey their translations.
+python3 "$_root_dir/scripts/rebrand_strings.py" "$_src_dir"
 # Set build flags
 cat "$_main_repo/flags.gn" "$_root_dir/flags.macos.gn" > "$_src_dir/out/Default/args.gn"
 
