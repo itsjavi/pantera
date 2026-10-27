@@ -39,5 +39,7 @@ pantera/ntp/edit-favorites.patch
 pantera/ntp/favorites-without-history.patch
 pantera/ntp/grow-the-favorites-grid.patch
 pantera/ntp/pantera-new-tab-page.patch
+pantera/ntp/darker-dark-background.patch
+pantera/ntp/follow-the-system-theme.patch
 pantera/branding/pantera-version.patch
 pantera/settings/about-page-versions.patch

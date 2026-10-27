@@ -1,0 +1,39 @@
+# Update the New Tab page when the system switches light and dark.
+#
+# chrome://new-tab-page-third-party's handler implements
+# OnNativeThemeUpdated() but never registers for it, so with the browser set
+# to follow the device, an open New Tab page kept the old colors until it was
+# reloaded. This registers it, as the full New Tab page's handler does. See
+# devbacklog TASK-30.
+
+--- a/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_handler.cc
++++ b/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_handler.cc
+@@ -32,6 +32,9 @@ NewTabPageThirdPartyHandler::NewTabPageThirdPartyHandler(
+       receiver_{this, std::move(pending_page_handler)} {
+   // Listen for theme installation.
+   ThemeServiceFactory::GetForProfile(profile_)->AddObserver(this);
++  // Pantera: also listen for the system switching between light and dark,
++  // which OnNativeThemeUpdated() handles but nothing registered it for.
++  native_theme_observation_.Observe(ui::NativeTheme::GetInstanceForNativeUi());
+ }
+ 
+ NewTabPageThirdPartyHandler::~NewTabPageThirdPartyHandler() {
+--- a/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_handler.h
++++ b/chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party_handler.h
+@@ -6,6 +6,7 @@
+ #define CHROME_BROWSER_UI_WEBUI_NEW_TAB_PAGE_THIRD_PARTY_NEW_TAB_PAGE_THIRD_PARTY_HANDLER_H_
+ 
+ #include "base/memory/raw_ptr.h"
++#include "base/scoped_observation.h"
+ #include "chrome/browser/themes/theme_service_observer.h"
+ #include "chrome/browser/ui/webui/new_tab_page_third_party/new_tab_page_third_party.mojom.h"
+ #include "content/public/browser/web_contents.h"
+@@ -55,6 +56,8 @@ class NewTabPageThirdPartyHandler
+ 
+   raw_ptr<Profile> profile_;
+   raw_ptr<content::WebContents> web_contents_;
++  base::ScopedObservation<ui::NativeTheme, ui::NativeThemeObserver>
++      native_theme_observation_{this};
+ 
+   // These are located at the end of the list of member variables to ensure the
+   // WebUI page is disconnected before other members are destroyed.

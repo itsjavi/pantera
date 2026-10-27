@@ -19,7 +19,7 @@
  
  #include "base/feature_list.h"
  #include "base/logging.h"
-@@ -180,13 +182,39 @@ void AddBaselinePalette(ColorProvider* provider,
+@@ -180,13 +182,39 @@
    }
  }
  
@@ -65,7 +65,7 @@
    ColorMixer& mixer = provider->AddMixer();
    mixer[kColorRefPrimary0] = {palette->primary().get(0)};
    mixer[kColorRefPrimary10] = {palette->primary().get(10)};
-@@ -293,6 +321,42 @@ void AddGeneratedPalette(ColorProvider* provider,
+@@ -293,6 +321,45 @@
    mixer[kColorRefNeutralVariant100] = {palette->neutral_variant().get(100)};
  }
  
@@ -78,8 +78,9 @@
 +}
 +
 +// Adds Pantera's default palette. Dark mode is charcoal (DECISION-8): neutral
-+// tones up to 25 are halved, then ease back to their own value at 40, so the
-+// tab strip, toolbar and pages are near black but still apart.
++// and neutral-variant tones (both zero-chroma grays) up to 25 are halved, then
++// ease back to their own value at 40, so the tab strip, toolbar, pages and
++// lines between them are near black but still apart.
 +void AddPanteraPalette(ColorProvider* provider,
 +                       ColorProviderKey::ColorMode color_mode) {
 +  const PanteraPalette palette;
@@ -96,6 +97,8 @@
 +          {kColorRefNeutral17, 17}, {kColorRefNeutral20, 20},
 +          {kColorRefNeutral22, 22}, {kColorRefNeutral24, 24},
 +          {kColorRefNeutral25, 25}, {kColorRefNeutral30, 30},
++          {kColorRefNeutralVariant10, 10}, {kColorRefNeutralVariant15, 15},
++          {kColorRefNeutralVariant20, 20}, {kColorRefNeutralVariant30, 30},
 +      });
 +  ColorMixer& mixer = provider->AddMixer();
 +  for (const auto& [id, tone] : kDarkNeutrals) {
@@ -108,7 +111,7 @@
  void AddRefColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
    // Typically user_color should always be set when the source has been set to
    // kAccent, however there may still be cases when this can occur (e.g. failing
-@@ -302,7 +366,7 @@ void AddRefColorMixer(ColorProvider* provider, const ColorProviderKey& key) {
+@@ -302,7 +369,7 @@
    if (!key.user_color.has_value() ||
        key.user_color_source == ColorProviderKey::UserColorSource::kBaseline ||
        key.user_color_source == ColorProviderKey::UserColorSource::kGrayscale) {

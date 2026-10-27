@@ -1,0 +1,28 @@
+# Darken the New Tab page in dark mode in Pantera's themes.
+#
+# Chromium paints the New Tab page in the toolbar's color. In Pantera's own
+# themes (Default and Grey) in dark mode it uses the page surface color
+# instead, as dark as other pages, which fits the charcoal theme
+# (DECISION-8). Other theme colors, including Chromium, keep the toolbar's
+# color. See devbacklog TASK-30.
+
+--- a/chrome/browser/ui/color/material_new_tab_page_color_mixer.cc
++++ b/chrome/browser/ui/color/material_new_tab_page_color_mixer.cc
+@@ -50,7 +50,16 @@ void AddMaterialNewTabPageColorMixer(ui::ColorProvider* provider,
+       ui::kColorSysOnTonalContainer};
+   mixer[kColorNewTabPageAddShortcutBackgroundHovered] = {
+       ui::SetAlpha({ui::kColorSysOnSurface}, 0x14)};
+-  mixer[kColorNewTabPageBackground] = {ui::kColorSysBase};
++  // Pantera: in its own themes (Default and Grey, which have no user color),
++  // the New Tab page is as dark as other pages in dark mode, not the toolbar.
++  const bool pantera_theme =
++      !key.user_color.has_value() ||
++      key.user_color_source ==
++          ui::ColorProviderKey::UserColorSource::kBaseline ||
++      key.user_color_source ==
++          ui::ColorProviderKey::UserColorSource::kGrayscale;
++  mixer[kColorNewTabPageBackground] = {
++      pantera_theme && dark_mode ? ui::kColorSysSurface : ui::kColorSysBase};
+   mixer[kColorNewTabPageBorder] = {ui::kColorSysBaseContainer};
+   mixer[kColorNewTabPageButtonBackground] = {ui::kColorSysTonalContainer};
+   mixer[kColorNewTabPageButtonBackgroundHovered] = {
