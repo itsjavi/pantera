@@ -43,3 +43,4 @@ pantera/ntp/darker-dark-background.patch
 pantera/ntp/follow-the-system-theme.patch
 pantera/branding/pantera-version.patch
 pantera/settings/about-page-versions.patch
+pantera/settings/about-page-license.patch

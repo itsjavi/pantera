@@ -18,3 +18,7 @@ forms of "Pantera".
 - [ ] To be defined: per-language replacement tables, reviewed by native speakers
 
 ## Notes
+
+Two more leftovers the rename can't see, found in TASK-27's build (2026-10-27): Nepali writes the
+name in Devanagari ("क्रोमियम लेखक" in the copyright line), and upstream's Canadian French
+copyright line says "Les auteurs de Chrome". Check the other catalogs for both kinds.

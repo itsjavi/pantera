@@ -5,6 +5,7 @@ priority: medium
 labels: [phase-0, branding, l10n]
 depends_on: []
 created: 2026-10-27
+closed: 2026-10-27
 ---
 
 ## Goal
@@ -33,3 +34,7 @@ are. Check that no message both renames "Chromium" and contains the authors cred
 
 Can be tested without a build: run the script on the original `.grd`/`.xtb` files (AGENTS.md,
 Validation) or on `git -C build/src show HEAD:<path>` copies.
+
+Won't do (2026-10-27): the user chose "The Pantera Authors" for the copyright line in every
+language (DECISION-12, replacing DECISION-3), so renaming the localized credit is now what's
+wanted. TASK-27 does the English side.

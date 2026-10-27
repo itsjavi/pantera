@@ -10,9 +10,10 @@ English text alone would silently drop every translation. The script computes ea
 message's fingerprint before and after the rename with the source tree's own grit, and
 rewrites the translation keys to match.
 
-"Chromium" stays where it names the open source project rather than the browser:
-"The Chromium Authors", the linked "Chromium" in "... made possible by the Chromium open
-source project", and Chromium OS. Inflected forms in other languages (e.g. Finnish
+"Chromium" stays where it names the open source project rather than the browser: the
+linked "Chromium" in "... made possible by the Chromium open source project", and
+Chromium OS. "The Chromium Authors" becomes "The Pantera Authors" in the copyright line
+and company name (DECISION-12). Inflected forms in other languages (e.g. Finnish
 "Chromiumin") are left as they are.
 """
 
@@ -34,7 +35,7 @@ GRD_FILES = (
 # the new name, so only a following Latin letter (an inflection, or "ChromiumOS") stops it.
 LATIN = r"A-Za-z0-9_À-ɏ"
 CHROMIUM = re.compile(
-    rf'(?<![0-9_.])Chromium(?![{LATIN}]| Authors| OS\b|\s*<ph name="END_LINK_CHROMIUM")')
+    rf'(?<![0-9_.])Chromium(?![{LATIN}]| OS\b|\s*<ph name="END_LINK_CHROMIUM")')
 MESSAGE = re.compile(r"(<message\b[^>]*>)(.*?)(</message>)", re.DOTALL)
 TRANSLATION = re.compile(r'<translation id="(\d+)"([^>]*)>(.*?)</translation>', re.DOTALL)
 PART = re.compile(r'<part file="([^"]+)"')

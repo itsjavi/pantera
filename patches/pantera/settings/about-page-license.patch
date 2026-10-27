@@ -1,0 +1,48 @@
+# Say on the About page which license Pantera's source code is under.
+#
+# Chromium's About page credits "the Chromium open source project and other
+# open source software". Pantera adds a line under it, as Brave does for the
+# MPL: "Its source code is available under the BSD 3-Clause License, with
+# instructions to build it yourself", linking to LICENSE and to the README's
+# build section on GitHub. See devbacklog TASK-27 and DECISION-11.
+
+--- a/chrome/app/settings_strings.grdp
++++ b/chrome/app/settings_strings.grdp
+@@ -58,6 +58,9 @@
+     <message name="IDS_SETTINGS_ABOUT_PAGE_LEARN_MORE_SYSTEM_REQUIREMENTS" desc="The accessibility label for a 'Learn more' link next to an error message about how the user's operating system is not supported.">
+       Learn more about system requirements
+     </message>
++    <message name="IDS_SETTINGS_ABOUT_PAGE_PANTERA_LICENSE" desc="On the About page, under the line that credits the Chromium project: the license of Pantera's own source code, linking to the license and to instructions for building Pantera.">
++      Its source code is available under the <ph name="BEGIN_LINK_LICENSE">&lt;a target="_blank" href="$1" aria-description="$3"&gt;</ph>BSD 3-Clause License<ph name="END_LINK_LICENSE">&lt;/a&gt;</ph>, with <ph name="BEGIN_LINK_BUILD">&lt;a target="_blank" href="$2" aria-description="$3"&gt;</ph>instructions to build it yourself<ph name="END_LINK_BUILD">&lt;/a&gt;</ph>.
++    </message>
+     <if expr="not is_chromeos">
+       <message name="IDS_SETTINGS_ABOUT_PAGE_RELAUNCH" desc="The label for the relaunch button that relaunches the browser once update is complete">
+         Relaunch
+--- a/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
++++ b/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
+@@ -383,6 +383,15 @@
+       l10n_util::GetStringUTF16(IDS_SETTINGS_OPENS_IN_NEW_TAB));
+   html_source->AddString("aboutProductLicense", license);
+ 
++  // Pantera's own license, under Chromium's credit.
++  html_source->AddString(
++      "aboutPanteraLicense",
++      l10n_util::GetStringFUTF16(
++          IDS_SETTINGS_ABOUT_PAGE_PANTERA_LICENSE,
++          u"https://github.com/itsjavi/pantera/blob/main/LICENSE",
++          u"https://github.com/itsjavi/pantera#building",
++          l10n_util::GetStringUTF16(IDS_SETTINGS_OPENS_IN_NEW_TAB)));
++
+   html_source->AddBoolean("aboutObsoleteNowOrSoon",
+                           ObsoleteSystem::IsObsoleteNowOrSoon());
+   html_source->AddBoolean("aboutObsoleteEndOfTheLine",
+--- a/chrome/browser/resources/settings/about_page/about_page.html.ts
++++ b/chrome/browser/resources/settings/about_page/about_page.html.ts
+@@ -114,6 +114,7 @@
+ 
+     <div class="info-section">
+       <div class="secondary">$i18nRaw{aboutProductLicense}</div>
++      <div class="secondary">$i18nRaw{aboutPanteraLicense}</div>
+     </div>
+ <if expr="_google_chrome or _is_chrome_for_testing_branded">
+     <div class="secondary">

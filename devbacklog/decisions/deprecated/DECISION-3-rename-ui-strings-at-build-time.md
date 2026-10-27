@@ -3,6 +3,7 @@ id: DECISION-3
 title: Rename UI strings at build time and keep the Chromium credit
 date: 2026-10-27
 tasks: [TASK-2]
+replaced_by: DECISION-12
 ---
 
 ## Context
