@@ -1,0 +1,23 @@
+# Name Pantera's keychain item "Pantera Safe Storage".
+#
+# The browser keeps the key that encrypts saved passwords and cookies in a
+# keychain item. Unbranded builds call it "Chromium Safe Storage", so Pantera
+# would share (and ask for access to) Chromium's item, and macOS would show
+# "Chromium" in the keychain access prompt.
+#
+# Changing this name later makes existing installs lose access to their
+# encrypted data, so keep it stable once Pantera ships.
+
+--- a/components/os_crypt/common/keychain_password_mac.mm
++++ b/components/os_crypt/common/keychain_password_mac.mm
+@@ -35,8 +35,8 @@
+ const char kDefaultServiceName[] = "Chrome Safe Storage";
+ const char kDefaultAccountName[] = "Chrome";
+ #else
+-const char kDefaultServiceName[] = "Chromium Safe Storage";
+-const char kDefaultAccountName[] = "Chromium";
++const char kDefaultServiceName[] = "Pantera Safe Storage";
++const char kDefaultAccountName[] = "Pantera";
+ #endif
+
+ // These values are persisted to logs. Entries should not be renumbered and
