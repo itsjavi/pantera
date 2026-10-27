@@ -82,6 +82,9 @@ A full build takes several hours and needs about 100–150 GB of free disk space
 **Requirements:** a Mac with Apple Silicon, Xcode 26 or later (keep the app open while
 building), and [Homebrew](https://brew.sh).
 
+The Makefile runs the steps below with the right environment: `make setup` once, then
+`make build`. `make help` lists the other targets.
+
 ```bash
 brew install python@3.13 go ninja coreutils readline node esbuild typescript
 xcodebuild -downloadComponent MetalToolchain

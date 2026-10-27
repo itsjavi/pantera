@@ -6,3 +6,6 @@ build/
 
 # Agent scratch space
 .local/
+
+# Local overrides for the Makefile
+local.mk

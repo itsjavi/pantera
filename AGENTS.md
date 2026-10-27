@@ -58,6 +58,7 @@ for the formats, and use its script rather than reading folders by hand.
   `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
   rekeys their translations.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
+- `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
 
 ## Upstream
 
@@ -96,6 +97,7 @@ fix-ups in separate commits, and update the base above. Conflicts are most likel
 
 A full Chromium build takes hours and about 100–150 GB of disk, so don't start one unless asked.
 
+- `make check` runs the script, patch and backlog checks below in one go.
 - Shell scripts: `bash -n <script>`.
 - Patch series and files: `devutils/check_patch_files.sh` (needs the submodule).
 - A Pantera patch without a Chromium checkout: download the files it touches for the pinned

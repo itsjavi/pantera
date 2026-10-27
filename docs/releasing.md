@@ -48,6 +48,10 @@ for example `156.0.8078.47-1.1`. To release Pantera changes on the same Chromium
    notarizes and staples the `.dmg`. The first time, macOS asks whether `codesign` can use the
    key: choose **Always Allow**. It takes about 10 minutes, most of it waiting for Apple.
 
+   `make release` runs this step and the next. It signs with the first Developer ID identity in
+   the keychain and notarizes with the `notary` profile; set `CERTIFICATE` or `NOTARY_PROFILE`
+   in a git-ignored `local.mk` to change them.
+
 3. Check that Gatekeeper accepts both. Each `spctl` line must say `source=Notarized Developer ID`:
 
    ```bash
