@@ -21,6 +21,7 @@ let favicons = ["settings", "downloads", "bookmarks", "management", "plugins"].m
     "chrome/app/theme/%@/chromium/favicon_password_manager.png",
     "components/resources/%@/favicon_history.png",
     "components/resources/%@/flags_ui/favicon_flags.png",
+    "extensions/browser/resources/%@/favicon_extensions.png",
 ]
 
 func recolor(_ input: URL, _ output: URL) throws {

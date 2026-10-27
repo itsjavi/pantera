@@ -215,19 +215,13 @@ func iconCommands(_ path: NSBezierPath, _ frame: Frame) -> String {
     }.joined(separator: "\n") + "\n"
 }
 
-let glyphFrame = Frame(x: 175, y: 60, side: 760, size: 24)
+let glyphFrame = Frame(size: 24)
 
-/// The panther's head with the eye cut out, framed as a bust and clipped to `glyphFrame`: the
-/// glyph that replaces Chromium's logo in small icons. The whiskers and pupil are too fine for
-/// 16–24 px.
+/// The whole one-color panther, framed like the app icon and clipped to the canvas (the neck runs
+/// off its edges): the glyph that replaces Chromium's logo in small icons.
 func glyphPath() -> NSBezierPath {
-    let path = NSBezierPath()
-    path.windingRule = .evenOdd
-    path.append(headPath())
-    path.append(eyePath())
-    let frame = CGPath(rect: CGRect(x: glyphFrame.x, y: canvas - glyphFrame.y - glyphFrame.side,
-                                    width: glyphFrame.side, height: glyphFrame.side), transform: nil)
-    let clipped = NSBezierPath(cgPath: path.cgPath.intersection(frame, using: .evenOdd))
+    let frame = CGPath(rect: CGRect(x: 0, y: 0, width: canvas, height: canvas), transform: nil)
+    let clipped = NSBezierPath(cgPath: pantherPath().cgPath.intersection(frame, using: .evenOdd))
     clipped.windingRule = .evenOdd
     return clipped
 }

@@ -5,6 +5,7 @@ priority: low
 labels: [phase-0, branding, ui]
 depends_on: []
 created: 2026-10-27
+completed: 2026-10-27
 ---
 
 ## Goal
@@ -19,7 +20,7 @@ browser" item (user's screenshots, 2026-10-27).
 - [x] One monochrome panther glyph, generated from the icon's head path in `make-icon.swift`
 - [x] The Settings toolbar shows the panther in light and dark mode
 - [x] The "About Pantera" item in the Settings menu shows a Pantera icon
-- [ ] The address bar chip on `chrome://` pages and the app menu's default browser item show it
+- [x] The address bar chip on `chrome://` pages and the app menu's default browser item show it
 - [x] Other WebUI pages that use the same icons are checked (History, Downloads, Extensions)
 
 ## Notes
@@ -62,10 +63,10 @@ logo in dark mode. The New Tab and product favicons
 `scripts/make-icon.swift` now takes `branding/overlay` as its second argument and writes,
 besides the New Tab page's `panther.svg`:
 
-- The glyph: the head with the eye cut out (no whiskers or pupil, too fine at 16-24 px), framed
-  as a bust (canvas square at 175, 60, side 760) and clipped to it with Core Graphics' path
-  intersection, so nothing draws outside the icon. `branding/panther-glyph.svg` is the 24-unit
-  source.
+- The glyph: the whole one-color panther (DECISION-10), framed like the app icon and clipped to
+  the canvas with Core Graphics' path intersection, so nothing draws outside the icon.
+  `branding/panther-glyph.svg` is the 24-unit source. A first version cropped the head as a
+  bust and dropped the whiskers and pupil; the user found it cut off compared to the art.
 - The five vector icons (`chrome_product.icon` in omnibox and chrome/app,
   `product_chrome_refresh_old.icon`, `components/vector_icons/chromium/product.icon` and
   `product_refresh.icon`) as `CANVAS_DIMENSIONS, 24` paths (even-odd is the default fill rule).
@@ -81,3 +82,10 @@ Checked in the build (dark mode): Settings' header and "About Pantera" item, and
 and History toolbars, show the panther. Not checked: the native icons (address bar chip on
 `chrome://` pages, the app menu's default browser item, infobars), which can't be captured
 without screen recording; the user needs to look.
+
+The user confirmed in the build that the address bar chip on `chrome://` pages shows the panther
+(2026-10-27), and pointed out the blue Extensions tab icon: `favicon_extensions.png` lives in
+`extensions/browser/resources/`, which `scripts/recolor-favicons.swift` now covers. A scan of all
+13 page favicons in the source found no other blue one. Rechecked after the full-panther glyph:
+Settings' header and "About Pantera" item show the whole panther, and chrome://extensions'
+favicon is amber.
