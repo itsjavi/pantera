@@ -96,11 +96,11 @@ for _dylib in "$_libraries"/*.dylib; do
 done
 
 sign --identifier "$_bundle_id.framework" "$_framework"
-if (( _ad_hoc )); then
-  sign --identifier "$_bundle_id" --options restrict,library,runtime,kill --entitlements "$_root_dir/entitlements/app-entitlements.plist" "$_app"
-else
-  sign --identifier "$_bundle_id" --options restrict,library,runtime,kill --entitlements "$_root_dir/entitlements/app-entitlements.plist" --requirements "=designated => identifier \"$_bundle_id\" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */" "$_app"
-fi
+# codesign's default designated requirement for a Developer ID signature pins
+# the Team ID. Keychain items such as "Pantera Safe Storage" trust the app by
+# this requirement, so without the Team ID any Developer ID app signed with the
+# same identifier could read them.
+sign --identifier "$_bundle_id" --options restrict,library,runtime,kill --entitlements "$_root_dir/entitlements/app-entitlements.plist" "$_app"
 
 # Verify the binary signature
 verify_dylib() {
