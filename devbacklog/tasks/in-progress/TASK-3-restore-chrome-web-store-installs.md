@@ -14,7 +14,7 @@ re-enabling any other Google service.
 
 ## Acceptance criteria
 
-- [ ] The update policy below is decided and recorded here
+- [x] The update policy is decided: DECISION-4, updates only when the user asks
 - [ ] "Add to Chrome" on chromewebstore.google.com installs an extension
 - [ ] Extension updates follow the decided policy, documented in the README
 - [ ] Domain substitution still applies to every file not needed for the Web Store
@@ -37,9 +37,5 @@ Plan: a list of files that `build.sh` keeps out of domain substitution (check ea
 Google URLs first), plus a Pantera patch that restores the store URLs and the install path on top
 of ungoogled's patch. Verifying needs a build (TASK-4).
 
-**Decision needed:** how extensions update. Google's update server sees the IP address and the
-installed extension list on every check.
-
-- Only when the user presses Update in chrome://extensions (no background contact).
-- Automatically every few hours, without usage pings.
-- On click now, with an opt-in "update automatically" setting later.
+Update policy: DECISION-4. Updates only when the user presses Update in chrome://extensions; no
+background, startup or extension-initiated checks, and no usage pings.
