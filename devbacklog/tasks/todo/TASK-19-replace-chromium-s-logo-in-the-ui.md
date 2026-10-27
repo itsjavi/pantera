@@ -49,3 +49,10 @@ replacements, so they fit `branding/overlay/`:
 `.icon` files are Skia path commands (`CANVAS_DIMENSIONS, 24`, `MOVE_TO`, `CUBIC_TO`, `CLOSE`),
 so a script can convert the glyph's SVG path. `make-icon.swift`'s `headPath()` is the source;
 the eye could be a cut-out.
+
+Seen again on 2026-10-27: the Settings toolbar shows the panther in light mode and Chromium's
+logo in dark mode. The New Tab and product favicons
+(`chrome/app/theme/default_*_percent/common/favicon_ntp.png`,
+`components/resources/default_*_percent/chromium/favicon_product.png`) are also Chromium's logo;
+`scripts/recolor-favicons.swift` skips them. Use the one-color panther (DECISION-10,
+`pantherPath()` in `scripts/make-icon.swift`) for all of these.

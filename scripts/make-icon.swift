@@ -1,6 +1,7 @@
 #!/usr/bin/env swift
-// Draws the layers of Pantera's app icon (AppIcon.icon/Assets/*.png) on a 1024 pt canvas.
-// Usage: swift scripts/make-icon.swift branding/AppIcon.icon
+// Draws the layer of Pantera's app icon (AppIcon.icon/Assets/head.png) on a 1024 pt canvas: a
+// one-color panther (DECISION-10).
+// Usage: swift scripts/make-icon.swift branding/AppIcon.icon [<svg output folder>]
 // The .icon's icon.json sets the background, glass, and the dark-appearance colors (the head
 // turns silver on a near-black background). Edit it by hand or in Icon Composer; this script
 // only rewrites Assets/. scripts/build-branding.sh runs it and compiles the result.
@@ -144,21 +145,18 @@ func pupilPath() -> NSBezierPath {
     return NSBezierPath(ovalIn: NSRect(x: eye.midX - 7, y: eye.midY - 20, width: 14, height: 40))
 }
 
-// icon.json lists these front to back: its first layer is drawn on top.
-// The head and whiskers are drawn in their light-appearance colors; icon.json overrides them
-// for dark.
+/// The whole panther as one even-odd shape: the head, with the eye and whiskers cut out to the
+/// background and the pupil left inside the eye.
+func pantherPath() -> NSBezierPath {
+    let path = NSBezierPath()
+    path.windingRule = .evenOdd
+    for part in [headPath(), eyePath(), pupilPath()] + whiskerPaths() { path.append(part) }
+    return path
+}
+
+// One layer, drawn in its light-appearance colors; icon.json overrides them for dark.
 let layers: [(String, NSBitmapImageRep)] = [
-    ("whiskers", bitmap {
-        for whisker in whiskerPaths() { fill(whisker, "#ECEEF1", "#ECEEF1") }
-    }),
-    ("eye", bitmap {
-        fill(eyePath(), "#FFD84D", "#F2A516")
-        fill(pupilPath(), "#050506", "#000000")
-    }),
-    ("head", bitmap {
-        fill(headPath(), "#1A1C20", "#060708")
-        cut(eyePath())
-    }),
+    ("head", bitmap { fill(pantherPath(), "#1A1C20", "#060708") }),
 ]
 
 let assets = URL(fileURLWithPath: iconOutput).appendingPathComponent("Assets")
@@ -168,3 +166,34 @@ for (name, rep) in layers {
     try rep.representation(using: .png, properties: [:])!.write(to: assets.appendingPathComponent("\(name).png"))
 }
 print("Wrote \(layers.count) layers to \(assets.path)")
+
+/// SVG path data for `path`, flipped to SVG's y-down coordinates.
+func svgPathData(_ path: NSBezierPath) -> String {
+    func point(_ p: NSPoint) -> String { String(format: "%.1f %.1f", p.x, canvas - p.y) }
+    var data = "", points = [NSPoint](repeating: .zero, count: 3)
+    for i in 0..<path.elementCount {
+        switch path.element(at: i, associatedPoints: &points) {
+        case .moveTo: data += "M\(point(points[0]))"
+        case .lineTo: data += "L\(point(points[0]))"
+        case .cubicCurveTo: data += "C\(point(points[0])) \(point(points[1])) \(point(points[2]))"
+        case .quadraticCurveTo: data += "Q\(point(points[0])) \(point(points[1]))"
+        case .closePath: data += "Z"
+        @unknown default: fatalError("Unknown path element")
+        }
+    }
+    return data
+}
+
+// With a second argument, also write the panther as a one-color SVG (panther.svg) for the UI,
+// where CSS masks it in a theme color.
+if CommandLine.arguments.count > 2 {
+    let svgOutput = URL(fileURLWithPath: CommandLine.arguments[2])
+    try FileManager.default.createDirectory(at: svgOutput, withIntermediateDirectories: true)
+    let svg = """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 \(Int(canvas)) \(Int(canvas))">\
+        <path fill-rule="evenodd" d="\(svgPathData(pantherPath()))"/></svg>
+
+        """
+    try svg.write(to: svgOutput.appendingPathComponent("panther.svg"), atomically: true, encoding: .utf8)
+    print("Wrote panther.svg to \(svgOutput.path)")
+}

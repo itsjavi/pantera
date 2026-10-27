@@ -3,6 +3,7 @@ id: DECISION-2
 title: Product identity: names, bundle ID, profile folder and keychain item
 date: 2026-10-27
 tasks: [TASK-1, TASK-2]
+replaced_by: DECISION-10
 ---
 
 ## Context
