@@ -27,7 +27,7 @@ for the formats, and use its script rather than reading folders by hand.
 - Tick acceptance criteria and record findings in the task's Notes as you go.
 - When every criterion is met and verified, run `backlog.py move TASK-N done` and commit the move
   with the change. If something couldn't be verified, leave the task in progress and say why in
-  its Notes. Tasks that won't be done go to `discarded`, with the reason in their Notes.
+  its Notes. Tasks that won't be done go to `wont-do`, with the reason in their Notes.
 - Put follow-up work in new tasks (`--state draft` when unclear) instead of widening the current one.
 - Only **accepted** decisions are valid for agent work. Before changing an area, read its accepted
   decisions (`backlog.py decisions --status accepted`, `backlog.py show DECISION-N`) and don't work

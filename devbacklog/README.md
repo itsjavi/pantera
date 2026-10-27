@@ -16,7 +16,7 @@ devbacklog/
     ├── todo/           Ready to start
     ├── in-progress/    Being worked on
     ├── done/           Finished and verified
-    └── discarded/      Won't be done
+    └── wont-do/        Won't be done
 ```
 
 ## Tasks
@@ -55,7 +55,7 @@ Findings, decisions, links, open questions.
 | `labels` | Optional, `[a, b]`, lowercase-kebab-case. Every task gets its phase (`phase-0` … `phase-3`, see [roadmap.md](roadmap.md)) plus area labels such as `extensions`, `privacy`, `build`, `l10n`. |
 | `depends_on` | Optional, `[TASK-1, TASK-2]`. A task isn't ready until these are done. |
 | `created` | `YYYY-MM-DD`. |
-| `completed`, `discarded` | Dates the script adds when a task moves to `done` or `discarded`. |
+| `completed`, `closed` | Dates the script adds when a task moves to `done` or `wont-do`. |
 
 The frontmatter is a strict subset of YAML: one `key: value` per line, lists in `[a, b]` form,
 no comments or nested values.
@@ -114,8 +114,8 @@ accepted, deprecate the old one with `--replaced-by`.
 - **in-progress**: someone is working on it. Keep it to one task per person or agent.
 - **done**: every acceptance criterion is met and verified, and the work is committed. Gets a
   `completed` date.
-- **discarded**: won't be done. Say why in its Notes. Gets a `discarded` date, and `list` hides it
-  unless you ask for it (`list discarded`). Tasks that depend on it need a new plan.
+- **wont-do**: won't be done. Say why in its Notes. Gets a `closed` date, and `list` hides it
+  unless you ask for it (`list wont-do`). Tasks that depend on it need a new plan.
 
 ## The script
 
@@ -150,7 +150,7 @@ the lowest number.
 3. Do the work. Tick acceptance criteria as they're met and add findings to Notes. Record choices
    made along the way with `decide`: proposed, or accepted when the user made the call.
 4. When everything is verified, move the task to `done` and commit the move with the change. If
-   it won't be done, move it to `discarded` and say why.
+   it won't be done, move it to `wont-do` and say why.
 5. Put follow-up work you discover in a new task (`draft` if it's unclear, `todo` if it's ready)
    instead of growing the current one.
 6. Run `check` before committing backlog changes.

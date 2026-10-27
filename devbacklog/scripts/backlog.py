@@ -26,10 +26,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TASKS = ROOT / "tasks"
-STATES = ("draft", "todo", "in-progress", "done", "discarded")
+STATES = ("draft", "todo", "in-progress", "done", "wont-do")
 ACTIVE_STATES = ("draft", "todo", "in-progress")
 # The date field each closing state stamps on a task when it moves there.
-CLOSING_STAMPS = {"done": "completed", "discarded": "discarded"}
+CLOSING_STAMPS = {"done": "completed", "wont-do": "closed"}
 PRIORITIES = ("high", "medium", "low")
 REQUIRED = ("id", "title", "priority", "created")
 ID = re.compile(r"^TASK-(\d+)$")
@@ -211,8 +211,8 @@ def cmd_next(tasks, args):
 
 
 def cmd_list(tasks, args):
-    # Discarded tasks only show up when asked for by name.
-    states = args.states or [state for state in STATES if state != "discarded"]
+    # Won't-do tasks only show up when asked for by name.
+    states = args.states or [state for state in STATES if state != "wont-do"]
     for state in states:
         if state not in STATES:
             raise BacklogError(f"unknown state {state}; use one of {', '.join(STATES)}")
@@ -381,8 +381,8 @@ def cmd_check(tasks, args):
         for dep in task.depends_on:
             if dep not in ids:
                 problems.append(f"{task.path.relative_to(ROOT)}: depends on unknown {dep}")
-            elif task.state in ACTIVE_STATES and by_id[dep].state == "discarded":
-                problems.append(f"{task.path.relative_to(ROOT)}: depends on {dep}, which was discarded")
+            elif task.state in ACTIVE_STATES and by_id[dep].state == "wont-do":
+                problems.append(f"{task.path.relative_to(ROOT)}: depends on {dep}, which won't be done")
     for path in TASKS.iterdir():
         if path.name.startswith("."):
             continue
