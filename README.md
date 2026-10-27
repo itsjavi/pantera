@@ -135,6 +135,9 @@ variables:
 | `PROD_MACOS_NOTARIZATION_TEAM_ID` | Developer Team ID |
 | `PROD_MACOS_NOTARIZATION_PWD` | App-specific password |
 
+The whole release process, from the certificate to the GitHub Release, is in
+[docs/releasing.md](docs/releasing.md).
+
 ## Credits and license
 
 Pantera builds on [Chromium](https://www.chromium.org/),

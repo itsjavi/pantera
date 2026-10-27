@@ -57,6 +57,7 @@ for the formats, and use its script rather than reading folders by hand.
   branding asset, `preview-icons.swift` renders a built app's icon beside system apps, and
   `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
   rekeys their translations.
+- `docs/releasing.md`: how to sign, notarize and publish a release.
 
 ## Upstream
 
