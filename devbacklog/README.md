@@ -1,11 +1,15 @@
 # Development backlog
 
-Pantera's plan and tasks, kept as plain Markdown in the repository so people and agents work
-from the same list.
+Pantera's plan, tasks and decisions, kept as plain Markdown in the repository so people and
+agents work from the same list. It's a lightweight, portable take on
+[Backlog.md](https://github.com/MrLesk/Backlog.md): no tool to install, just files and one Python
+script. Because it lives in git, it is also the agents' durable memory: it survives new sessions,
+clones and machines.
 
 ```
 devbacklog/
 ├── roadmap.md          High-level goals, one section per phase
+├── decisions/          Decision records: what was decided and why
 ├── scripts/backlog.py  The tool to read and change the backlog
 └── tasks/
     ├── draft/          Ideas and work that isn't ready to start
@@ -55,6 +59,44 @@ Findings, decisions, links, open questions.
 The frontmatter is a strict subset of YAML: one `key: value` per line, lists in `[a, b]` form,
 no comments or nested values.
 
+## Decisions
+
+Each decision is one file in `decisions/`, named `DECISION-N-short-title.md`. Record a decision
+whenever a choice constrains future work: product identity, privacy trade-offs, architecture,
+anything someone might otherwise undo by accident.
+
+```markdown
+---
+id: DECISION-4
+title: Web Store extensions update only when the user asks
+date: 2026-10-27
+status: accepted
+tasks: [TASK-3]
+---
+
+## Context
+
+The problem and the forces at play.
+
+## Decision
+
+What was decided.
+
+## Consequences
+
+What follows from it, including the downsides.
+```
+
+| Field | Rules |
+|---|---|
+| `id` | `DECISION-N`, never reused or renumbered. |
+| `status` | `proposed`, `accepted`, `superseded` or `rejected`. |
+| `tasks` | Optional, `[TASK-1]`: the tasks it came from or affects. |
+| `superseded_by` | Required when `status: superseded`: the `DECISION-N` that replaces it. |
+
+Don't edit an accepted decision to change its meaning. Record a new one, then mark the old one
+`superseded` with `superseded_by`.
+
 ## States
 
 - **draft**: an idea or a task still missing a clear goal or acceptance criteria.
@@ -73,8 +115,13 @@ devbacklog/scripts/backlog.py list todo --label privacy
 devbacklog/scripts/backlog.py show TASK-3
 devbacklog/scripts/backlog.py new "Add Sparkle updates" --priority medium --labels phase-1,updates --state draft
 devbacklog/scripts/backlog.py move TASK-3 in-progress
-devbacklog/scripts/backlog.py check                  # validate every task file
+devbacklog/scripts/backlog.py decisions --task TASK-3
+devbacklog/scripts/backlog.py show DECISION-4
+devbacklog/scripts/backlog.py decide "Use Sparkle for updates" --tasks TASK-6
+devbacklog/scripts/backlog.py check                  # validate every task and decision
 ```
+
+`show TASK-N` also lists the decisions linked to that task.
 
 **Next up** is the highest-priority task in `todo` whose dependencies are all done; ties go to
 the lowest number.
@@ -83,7 +130,9 @@ the lowest number.
 
 1. Check `status` before starting work.
 2. Take `next`, unless someone asked for something specific. Move the task to `in-progress`.
-3. Do the work. Tick acceptance criteria as they're met and add findings to Notes.
+   Read its linked decisions, and any others for the area you're changing.
+3. Do the work. Tick acceptance criteria as they're met and add findings to Notes. When a choice
+   is made along the way, record it with `decide`.
 4. When everything is verified, move the task to `done` and commit the move with the change.
 5. Put follow-up work you discover in a new task (`draft` if it's unclear, `todo` if it's ready)
    instead of growing the current one.

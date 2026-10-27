@@ -10,8 +10,9 @@ repository root. It is git-ignored. Don't leave scratch files anywhere else in t
 
 ## Backlog
 
-Work is tracked in `devbacklog/`. Read [devbacklog/README.md](devbacklog/README.md) for the task
-format, and use its script rather than reading task folders by hand.
+Work and decisions are tracked in `devbacklog/`. It's this project's durable memory: it travels
+with the repository to every clone and machine. Read [devbacklog/README.md](devbacklog/README.md)
+for the formats, and use its script rather than reading folders by hand.
 
 - Start by running `devbacklog/scripts/backlog.py status`.
 - Unless the user asks for something specific, take `devbacklog/scripts/backlog.py next`. If a
@@ -25,6 +26,11 @@ format, and use its script rather than reading task folders by hand.
   with the change. If something couldn't be verified, leave the task in progress and say why in
   its Notes.
 - Put follow-up work in new tasks (`--state draft` when unclear) instead of widening the current one.
+- Before changing an area, read its decisions (`backlog.py decisions`, `backlog.py show DECISION-N`).
+  Don't work against an accepted decision. If one needs to change, ask the user, then record a new
+  decision that supersedes it.
+- Record every decision that constrains future work with `backlog.py decide`, including the
+  user's answers to open questions.
 - Run `backlog.py check` before committing backlog changes.
 - High-level goals live in [devbacklog/roadmap.md](devbacklog/roadmap.md). Label every task with
   its phase (`phase-0` … `phase-3`).

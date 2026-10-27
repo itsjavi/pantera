@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Pantera's development backlog: one Markdown file per task, one folder per state.
+"""Pantera's development backlog: Markdown tasks in one folder per state, plus decision records.
 
 Usage:
   backlog.py status                     Counts per state, tasks in progress and what's next.
   backlog.py next                       The todo task to pick up next.
   backlog.py list [STATE ...] [--label LABEL] [--priority PRIORITY]
-  backlog.py show TASK-N                Print a task.
+  backlog.py show TASK-N|DECISION-N     Print a task (with its decisions) or a decision.
   backlog.py new TITLE [--priority P] [--labels a,b] [--depends TASK-1,TASK-2] [--state S]
   backlog.py move TASK-N STATE          Move a task to another state.
-  backlog.py check                      Validate every task file.
+  backlog.py decisions [--status S] [--task TASK-N]
+  backlog.py decide TITLE [--tasks TASK-1,TASK-2] [--status S]
+  backlog.py check                      Validate every task and decision file.
 
-See devbacklog/README.md for the task format and workflow.
+See devbacklog/README.md for the formats and workflow.
 """
 
 import argparse
@@ -27,6 +29,10 @@ PRIORITIES = ("high", "medium", "low")
 REQUIRED = ("id", "title", "priority", "created")
 ID = re.compile(r"^TASK-(\d+)$")
 LABEL = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+DECISIONS = ROOT / "decisions"
+DECISION_STATUSES = ("proposed", "accepted", "superseded", "rejected")
+DECISION_REQUIRED = ("id", "title", "date", "status")
+DECISION_ID = re.compile(r"^DECISION-(\d+)$")
 
 
 class BacklogError(Exception):
@@ -82,7 +88,31 @@ def parse_value(value):
     return value.strip("'\"")
 
 
-def read_task(path, state):
+@dataclass
+class Decision:
+    path: Path
+    fields: dict
+
+    @property
+    def id(self):
+        return self.fields.get("id", "")
+
+    @property
+    def number(self):
+        match = DECISION_ID.match(self.id)
+        return int(match.group(1)) if match else 0
+
+    @property
+    def tasks(self):
+        return self.fields.get("tasks", [])
+
+    def row(self):
+        tasks = f"  ({', '.join(self.tasks)})" if self.tasks else ""
+        return (f"{self.id:<13}{self.fields.get('date', ''):<12}{self.fields.get('status', ''):<11}"
+                f"{self.fields.get('title', '')}{tasks}")
+
+
+def read_frontmatter(path):
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
         raise BacklogError(f"{path.relative_to(ROOT)}: missing frontmatter")
@@ -97,15 +127,20 @@ def read_task(path, state):
         if not sep:
             raise BacklogError(f"{path.relative_to(ROOT)}: frontmatter line is not 'key: value': {line}")
         fields[key.strip()] = parse_value(value)
-    return Task(path, state, fields, text[end + 5:])
+    return fields, text[end + 5:]
 
 
 def load():
     tasks = []
     for state in STATES:
         for path in sorted((TASKS / state).glob("*.md")):
-            tasks.append(read_task(path, state))
+            tasks.append(Task(path, state, *read_frontmatter(path)))
     return tasks
+
+
+def load_decisions():
+    decisions = [Decision(path, read_frontmatter(path)[0]) for path in DECISIONS.glob("*.md")]
+    return sorted(decisions, key=lambda d: d.number)
 
 
 def find(tasks, task_id):
@@ -141,6 +176,9 @@ def cmd_status(tasks, args):
     if waiting:
         print("\nWaiting on dependencies:")
         print("\n".join(f"  {t.row()}  (needs {', '.join(t.depends_on)})" for t in waiting))
+    decisions = load_decisions()
+    accepted = sum(d.fields.get("status") == "accepted" for d in decisions)
+    print(f"\nDecisions: {len(decisions)} recorded, {accepted} accepted (backlog.py decisions)")
 
 
 def cmd_next(tasks, args):
@@ -166,9 +204,50 @@ def cmd_list(tasks, args):
 
 
 def cmd_show(tasks, args):
+    if DECISION_ID.match(args.id.upper()):
+        decision = next((d for d in load_decisions() if d.id == args.id.upper()), None)
+        if not decision:
+            raise BacklogError(f"no decision {args.id}")
+        print(f"{decision.path.relative_to(ROOT.parent)}\n")
+        print(decision.path.read_text(encoding="utf-8"), end="")
+        return
     task = find(tasks, args.id)
     print(f"{task.path.relative_to(ROOT.parent)}  ({task.state})\n")
     print(task.path.read_text(encoding="utf-8"), end="")
+    related = [d for d in load_decisions() if task.id in d.tasks]
+    if related:
+        print("\nDecisions:")
+        print("\n".join(f"  {d.row()}" for d in related))
+
+
+def cmd_decisions(tasks, args):
+    rows = [d for d in load_decisions()
+            if (not args.status or d.fields.get("status") == args.status)
+            and (not args.task or args.task.upper() in d.tasks)]
+    print("\n".join(d.row() for d in rows) or "(no decisions)")
+
+
+def cmd_decide(tasks, args):
+    if args.status not in DECISION_STATUSES:
+        raise BacklogError(f"unknown status {args.status}; use one of {', '.join(DECISION_STATUSES)}")
+    number = max((d.number for d in load_decisions()), default=0) + 1
+    related = [t.upper() for t in split_list(args.tasks)]
+    path = DECISIONS / f"DECISION-{number}-{slugify(args.title)}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "---\n"
+        f"id: DECISION-{number}\n"
+        f"title: {args.title}\n"
+        f"date: {datetime.date.today().isoformat()}\n"
+        f"status: {args.status}\n"
+        f"tasks: [{', '.join(related)}]\n"
+        "---\n\n"
+        "## Context\n\n\n"
+        "## Decision\n\n\n"
+        "## Consequences\n",
+        encoding="utf-8",
+    )
+    print(path.relative_to(ROOT.parent))
 
 
 def slugify(title):
@@ -266,10 +345,46 @@ def cmd_check(tasks, args):
         for path in (TASKS / state).iterdir():
             if not path.name.startswith(".") and path.suffix != ".md":
                 problems.append(f"{path.relative_to(ROOT)}: only .md task files belong here")
+    decisions = load_decisions()
+    problems += check_decisions(decisions, ids)
     if problems:
         print("\n".join(problems))
         sys.exit(1)
-    print(f"OK: {len(tasks)} tasks")
+    print(f"OK: {len(tasks)} tasks, {len(decisions)} decisions")
+
+
+def check_decisions(decisions, task_ids):
+    problems = []
+    seen = {}
+    decision_ids = {d.id for d in decisions}
+    for decision in decisions:
+        name = decision.path.relative_to(ROOT)
+        for field in DECISION_REQUIRED:
+            if not decision.fields.get(field):
+                problems.append(f"{name}: missing {field}")
+        if decision.id and not DECISION_ID.match(decision.id):
+            problems.append(f"{name}: id must look like DECISION-N, got {decision.id}")
+        if decision.id and not decision.path.name.startswith(f"{decision.id}-"):
+            problems.append(f"{name}: file name must start with {decision.id}-")
+        if decision.id in seen:
+            problems.append(f"{name}: duplicate id {decision.id} (also {seen[decision.id]})")
+        seen[decision.id] = name
+        status = decision.fields.get("status")
+        if status and status not in DECISION_STATUSES:
+            problems.append(f"{name}: status must be one of {', '.join(DECISION_STATUSES)}")
+        if not isinstance(decision.fields.get("tasks", []), list):
+            problems.append(f"{name}: tasks must be a list like [TASK-1]")
+        for task_id in decision.tasks:
+            if task_id not in task_ids:
+                problems.append(f"{name}: refers to unknown {task_id}")
+        superseded_by = decision.fields.get("superseded_by")
+        if status == "superseded" and superseded_by not in decision_ids:
+            problems.append(f"{name}: superseded decisions need superseded_by: DECISION-N")
+    if DECISIONS.is_dir():
+        for path in DECISIONS.iterdir():
+            if not path.name.startswith(".") and path.suffix != ".md":
+                problems.append(f"{path.relative_to(ROOT)}: only .md decision files belong here")
+    return problems
 
 
 def main():
@@ -281,8 +396,15 @@ def main():
     list_parser.add_argument("states", nargs="*", metavar="STATE")
     list_parser.add_argument("--label")
     list_parser.add_argument("--priority", choices=PRIORITIES)
-    show_parser = commands.add_parser("show", help="print a task")
+    show_parser = commands.add_parser("show", help="print a task or a decision")
     show_parser.add_argument("id")
+    decisions_parser = commands.add_parser("decisions", help="list decisions")
+    decisions_parser.add_argument("--status", choices=DECISION_STATUSES)
+    decisions_parser.add_argument("--task")
+    decide_parser = commands.add_parser("decide", help="record a decision")
+    decide_parser.add_argument("title")
+    decide_parser.add_argument("--tasks", default="")
+    decide_parser.add_argument("--status", default="accepted")
     new_parser = commands.add_parser("new", help="create a task")
     new_parser.add_argument("title")
     new_parser.add_argument("--priority", default="medium")
@@ -292,7 +414,7 @@ def main():
     move_parser = commands.add_parser("move", help="move a task to another state")
     move_parser.add_argument("id")
     move_parser.add_argument("state")
-    commands.add_parser("check", help="validate every task file")
+    commands.add_parser("check", help="validate every task and decision file")
 
     args = parser.parse_args()
     handler = globals()[f"cmd_{args.command}"]
