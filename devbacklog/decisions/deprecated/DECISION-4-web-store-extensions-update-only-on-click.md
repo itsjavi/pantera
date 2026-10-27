@@ -3,6 +3,7 @@ id: DECISION-4
 title: Web Store extensions update only when the user asks
 date: 2026-10-27
 tasks: [TASK-3]
+replaced_by: DECISION-5
 ---
 
 ## Context
