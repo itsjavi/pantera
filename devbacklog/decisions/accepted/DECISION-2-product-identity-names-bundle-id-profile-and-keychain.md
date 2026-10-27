@@ -2,7 +2,6 @@
 id: DECISION-2
 title: Product identity: names, bundle ID, profile folder and keychain item
 date: 2026-10-27
-status: accepted
 tasks: [TASK-1, TASK-2]
 ---
 

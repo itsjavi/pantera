@@ -2,7 +2,6 @@
 id: DECISION-1
 title: Build on a copy of ungoogled-chromium-macos
 date: 2026-10-27
-status: accepted
 tasks: [TASK-1]
 ---
 

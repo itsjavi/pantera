@@ -2,7 +2,6 @@
 id: DECISION-4
 title: Web Store extensions update only when the user asks
 date: 2026-10-27
-status: accepted
 tasks: [TASK-3]
 ---
 

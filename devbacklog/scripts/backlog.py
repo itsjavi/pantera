@@ -36,7 +36,7 @@ ID = re.compile(r"^TASK-(\d+)$")
 LABEL = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 DECISIONS = ROOT / "decisions"
 DECISION_STATUSES = ("proposed", "accepted", "deprecated")
-DECISION_REQUIRED = ("id", "title", "date", "status")
+DECISION_REQUIRED = ("id", "title", "date")
 DECISION_ID = re.compile(r"^DECISION-(\d+)$")
 
 
@@ -96,6 +96,7 @@ def parse_value(value):
 @dataclass
 class Decision:
     path: Path
+    status: str
     fields: dict
 
     @property
@@ -113,7 +114,7 @@ class Decision:
 
     def row(self):
         tasks = f"  ({', '.join(self.tasks)})" if self.tasks else ""
-        return (f"{self.id:<13}{self.fields.get('date', ''):<12}{self.fields.get('status', ''):<11}"
+        return (f"{self.id:<13}{self.fields.get('date', ''):<12}{self.status:<11}"
                 f"{self.fields.get('title', '')}{tasks}")
 
 
@@ -153,7 +154,9 @@ def load():
 
 
 def load_decisions():
-    decisions = [Decision(path, read_frontmatter(path)[0]) for path in DECISIONS.glob("*.md")]
+    decisions = [Decision(path, status, read_frontmatter(path)[0])
+                 for status in DECISION_STATUSES
+                 for path in (DECISIONS / status).glob("*.md")]
     return sorted(decisions, key=lambda d: d.number)
 
 
@@ -191,10 +194,9 @@ def cmd_status(tasks, args):
         print("\nWaiting on dependencies:")
         print("\n".join(f"  {t.row()}  (needs {', '.join(t.depends_on)})" for t in waiting))
     decisions = load_decisions()
-    counts = " · ".join(f"{s} {sum(d.fields.get('status') == s for d in decisions)}"
-                        for s in DECISION_STATUSES)
+    counts = " · ".join(f"{s} {sum(d.status == s for d in decisions)}" for s in DECISION_STATUSES)
     print(f"\nDecisions: {counts} (only accepted ones are binding; backlog.py decisions)")
-    proposed = [d for d in decisions if d.fields.get("status") == "proposed"]
+    proposed = [d for d in decisions if d.status == "proposed"]
     if proposed:
         print("\nProposed decisions waiting for the user:")
         print("\n".join(f"  {d.row()}" for d in proposed))
@@ -242,7 +244,7 @@ def cmd_show(tasks, args):
 
 def cmd_decisions(tasks, args):
     rows = [d for d in load_decisions()
-            if (not args.status or d.fields.get("status") == args.status)
+            if (not args.status or d.status == args.status)
             and (not args.task or args.task.upper() in d.tasks)]
     print("\n".join(d.row() for d in rows) or "(no decisions)")
 
@@ -254,24 +256,28 @@ def find_decision(decision_id):
     raise BacklogError(f"no decision {decision_id}")
 
 
-def set_decision_status(decision, status, replaced_by=None):
-    text = set_field(decision.path.read_text(encoding="utf-8"), "status", status)
-    text = set_field(text, "replaced_by", replaced_by)
-    decision.path.write_text(text, encoding="utf-8")
-    print(f"{decision.id}: {decision.fields.get('status')} -> {status}")
+def move_decision(decision, status, replaced_by=None):
+    """Moves a decision to its status folder; only deprecated ones keep replaced_by."""
+    text = set_field(decision.path.read_text(encoding="utf-8"), "replaced_by", replaced_by)
+    target = DECISIONS / status / decision.path.name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+    if target != decision.path:
+        decision.path.unlink()
+    print(f"{decision.id}: {decision.status} -> {status}  ({target.relative_to(ROOT.parent)})")
 
 
 def cmd_accept(tasks, args):
     decision = find_decision(args.id)
-    if decision.fields.get("status") != "proposed":
-        raise BacklogError(f"{decision.id} is {decision.fields.get('status')}, not proposed")
-    set_decision_status(decision, "accepted")
+    if decision.status != "proposed":
+        raise BacklogError(f"{decision.id} is {decision.status}, not proposed")
+    move_decision(decision, "accepted")
 
 
 def cmd_deprecate(tasks, args):
     decision = find_decision(args.id)
     replaced_by = find_decision(args.replaced_by).id if args.replaced_by else None
-    set_decision_status(decision, "deprecated", replaced_by)
+    move_decision(decision, "deprecated", replaced_by)
 
 
 def cmd_decide(tasks, args):
@@ -279,14 +285,13 @@ def cmd_decide(tasks, args):
         raise BacklogError(f"unknown status {args.status}; use one of {', '.join(DECISION_STATUSES)}")
     number = max((d.number for d in load_decisions()), default=0) + 1
     related = [t.upper() for t in split_list(args.tasks)]
-    path = DECISIONS / f"DECISION-{number}-{slugify(args.title)}.md"
+    path = DECISIONS / args.status / f"DECISION-{number}-{slugify(args.title)}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         "---\n"
         f"id: DECISION-{number}\n"
         f"title: {args.title}\n"
         f"date: {datetime.date.today().isoformat()}\n"
-        f"status: {args.status}\n"
         f"tasks: [{', '.join(related)}]\n"
         "---\n\n"
         "## Context\n\n\n"
@@ -419,9 +424,8 @@ def check_decisions(decisions, task_ids):
         if decision.id in seen:
             problems.append(f"{name}: duplicate id {decision.id} (also {seen[decision.id]})")
         seen[decision.id] = name
-        status = decision.fields.get("status")
-        if status and status not in DECISION_STATUSES:
-            problems.append(f"{name}: status must be one of {', '.join(DECISION_STATUSES)}")
+        if "status" in decision.fields:
+            problems.append(f"{name}: remove the status field; the folder is the status")
         if not isinstance(decision.fields.get("tasks", []), list):
             problems.append(f"{name}: tasks must be a list like [TASK-1]")
         for task_id in decision.tasks:
@@ -430,10 +434,18 @@ def check_decisions(decisions, task_ids):
         replaced_by = decision.fields.get("replaced_by")
         if replaced_by and replaced_by not in decision_ids:
             problems.append(f"{name}: replaced_by refers to unknown {replaced_by}")
-        if replaced_by and status != "deprecated":
+        if replaced_by and decision.status != "deprecated":
             problems.append(f"{name}: only deprecated decisions have replaced_by")
-    if DECISIONS.is_dir():
-        for path in DECISIONS.iterdir():
+    for path in DECISIONS.iterdir() if DECISIONS.is_dir() else []:
+        if not path.name.startswith(".") and (not path.is_dir() or path.name not in DECISION_STATUSES):
+            problems.append(f"decisions/{path.name}: only the status folders "
+                            f"{', '.join(DECISION_STATUSES)} belong in decisions/")
+    for status in DECISION_STATUSES:
+        folder = DECISIONS / status
+        if not folder.is_dir():
+            problems.append(f"decisions/{status}/ is missing (keep a .gitkeep in empty status folders)")
+            continue
+        for path in folder.iterdir():
             if not path.name.startswith(".") and path.suffix != ".md":
                 problems.append(f"{path.relative_to(ROOT)}: only .md decision files belong here")
     return problems

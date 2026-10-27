@@ -10,6 +10,9 @@ clones and machines.
 devbacklog/
 ├── roadmap.md          High-level goals, one section per phase
 ├── decisions/          Decision records: what was decided and why
+│   ├── proposed/       Suggested, not binding yet
+│   ├── accepted/       Approved by the user; binding for all work
+│   └── deprecated/     Obsolete, kept for history
 ├── scripts/backlog.py  The tool to read and change the backlog
 └── tasks/
     ├── draft/          Ideas and work that isn't ready to start
@@ -62,16 +65,16 @@ no comments or nested values.
 
 ## Decisions
 
-Each decision is one file in `decisions/`, named `DECISION-N-short-title.md`. Record a decision
-whenever a choice constrains future work: product identity, privacy trade-offs, architecture,
-anything someone might otherwise undo by accident.
+Each decision is one file named `DECISION-N-short-title.md`. Like tasks, the folder it sits in
+is its status, so there is no status field. Record a decision whenever a choice constrains future
+work: product identity, privacy trade-offs, architecture, anything someone might otherwise undo
+by accident.
 
 ```markdown
 ---
 id: DECISION-4
 title: Web Store extensions update only when the user asks
 date: 2026-10-27
-status: accepted
 tasks: [TASK-3]
 ---
 
@@ -91,11 +94,11 @@ What follows from it, including the downsides.
 | Field | Rules |
 |---|---|
 | `id` | `DECISION-N`, never reused or renumbered. |
-| `status` | `proposed`, `accepted` or `deprecated`. |
+| `date` | `YYYY-MM-DD`, when it was recorded. |
 | `tasks` | Optional, `[TASK-1]`: the tasks it came from or affects. |
 | `replaced_by` | Optional on deprecated decisions: the `DECISION-N` that replaces it. |
 
-The statuses:
+The status folders:
 
 - **proposed**: suggested, not yet approved. Agents can propose decisions on their own (`decide`
   creates them as proposed). A proposal is not binding.
