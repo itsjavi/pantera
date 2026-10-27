@@ -27,9 +27,34 @@ if [[ -z "$_target_dmg" ]]; then
   _target_dmg="$_root_dir/build/pantera-browser_${_chromium_version}-${_ungoogled_revision}.${_package_revision}_macos.dmg"
 fi
 
+# Ad-hoc signatures have no Team ID, and library validation only loads code
+# with the process's Team ID, so the app and its helpers would abort at launch
+# when they dlopen the framework (ad-hoc signed too). Library validation comes
+# from the "library" option and from the hardened "runtime", so ad-hoc signing
+# leaves out both.
+ad_hoc_options() {
+  local _flags=() _kept=() _flag
+  IFS=, read -ra _flags <<< "$1"
+  for _flag in "${_flags[@]}"; do
+    [[ "$_flag" == library || "$_flag" == runtime ]] || _kept+=("$_flag")
+  done
+  local IFS=,
+  echo "${_kept[*]}"
+}
+
 sign() {
   if (( _ad_hoc )); then
-    codesign --sign - --force "$@"
+    local _args=() _previous="" _arg
+    for _arg in "$@"; do
+      if [[ "$_previous" == "--options" ]]; then
+        _arg="$(ad_hoc_options "$_arg")"
+      elif [[ "$_arg" == --options=* ]]; then
+        _arg="--options=$(ad_hoc_options "${_arg#--options=}")"
+      fi
+      _args+=("$_arg")
+      _previous="$_arg"
+    done
+    codesign --sign - --force "${_args[@]}"
   else
     codesign --sign "$MACOS_CERTIFICATE_NAME" --force --timestamp "$@"
   fi
