@@ -117,7 +117,7 @@ class AdBlockService {
   std::vector<ListFile> GetListFiles() const;
   base::FilePath GetListPath(const GURL& url) const;
 
-  void OnBundledDataRead(std::pair<std::string, std::string> data);
+  void OnCatalogRead(std::string catalog_json);
   void LoadEngines();
   void OnEnginesLoaded(size_t list_count);
   void OnListSettingsChanged();

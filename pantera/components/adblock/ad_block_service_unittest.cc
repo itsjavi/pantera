@@ -185,9 +185,11 @@ TEST_F(AdBlockServiceTest, UsesSavedEnginesAndRefreshesWhenDue) {
 
   std::unique_ptr<AdBlockService> service = CreateService();
   service->Start();
-  EXPECT_EQ(WaitForEngines(), 2u);
+  // A request right after startup, before the catalog is read, already goes
+  // through the saved engines.
   EXPECT_TRUE(
       Blocks(*service, "https://tracker.example/t.js", "https://news.example"));
+  EXPECT_EQ(WaitForEngines(), 2u);
 
   // Nothing is due yet.
   task_environment_.FastForwardBy(AdBlockService::kStartupCheckDelay +

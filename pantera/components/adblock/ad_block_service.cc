@@ -87,21 +87,14 @@ constexpr net::NetworkTrafficAnnotationTag kFilterListTrafficAnnotation =
           policy_exception_justification: "Not implemented."
         })");
 
-// Reads the bundled catalog and resources.
-std::pair<std::string, std::string> ReadBundledData(
-    const base::FilePath& resources_dir) {
+std::string ReadCatalog(const base::FilePath& resources_dir) {
   std::string catalog;
-  std::string resources;
   if (!base::ReadFileToString(resources_dir.Append(kCatalogFileName),
                               &catalog)) {
     LOG(ERROR) << "Ad block: no filter list catalog in "
                << resources_dir.value();
   }
-  if (!base::ReadFileToString(resources_dir.Append(kResourcesFileName),
-                              &resources)) {
-    LOG(ERROR) << "Ad block: no resources.json in " << resources_dir.value();
-  }
-  return {std::move(catalog), std::move(resources)};
+  return catalog;
 }
 
 // Checks a downloaded list and moves it into place. Returns its `! Expires`
@@ -138,8 +131,10 @@ std::optional<int> StoreList(const base::FilePath& temp_path,
 // from the serialized engines saved after the last build.
 class AdBlockEngines {
  public:
-  explicit AdBlockEngines(const base::FilePath& storage_dir)
+  AdBlockEngines(const base::FilePath& storage_dir,
+                 const base::FilePath& resources_dir)
       : storage_dir_(storage_dir),
+        resources_dir_(resources_dir),
         wrapper_(AdBlockEngineWrapper::Create()),
         resources_(adblock::new_empty_resource_storage()) {
     // adblock-rust asks Chromium's public suffix list for registrable
@@ -148,13 +143,32 @@ class AdBlockEngines {
         adblock::set_domain_resolver();
   }
 
-  void SetResources(const std::string& resources_json) {
-    resources_ = adblock::new_resource_storage(resources_json);
-    wrapper_->UseResources(*resources_);
+  // Loads the bundled resources and the engines saved last time, without
+  // waiting for the catalog. The service calls this first, so requests made
+  // at startup, which queue behind it on this sequence, are already checked.
+  void LoadSaved() {
+    std::string resources_json;
+    if (base::ReadFileToString(resources_dir_.Append(kResourcesFileName),
+                               &resources_json)) {
+      resources_ = adblock::new_resource_storage(resources_json);
+      wrapper_->UseResources(*resources_);
+    } else {
+      LOG(ERROR) << "Ad block: no resources.json in "
+                 << resources_dir_.value();
+    }
+
+    std::string saved_key;
+    if (base::ReadFileToString(storage_dir_.Append(kEngineKeyFileName),
+                               &saved_key) &&
+        LoadSavedEngines()) {
+      loaded_key_ = std::move(saved_key);
+      VLOG(1) << "Ad block: loaded saved engines";
+    }
   }
 
-  // Loads the engines, from the saved ones when they were built from the same
-  // files. Returns the number of list files in them.
+  // Makes the engines match `files`: nothing to do when they already do,
+  // the saved engines when they were built from the same files, a rebuild
+  // otherwise. Returns the number of list files in the engines.
   size_t Load(const std::vector<AdBlockService::ListFile>& files) {
     std::vector<const AdBlockService::ListFile*> present;
     std::string key = "pantera-adblock-engine 1\n";
@@ -173,6 +187,12 @@ class AdBlockEngines {
                        file.default_engine ? "default" : "additional", "\n"});
     }
 
+    if (key == loaded_key_) {
+      VLOG(1) << "Ad block: engines are up to date with " << present.size()
+              << " lists";
+      return present.size();
+    }
+
     const base::FilePath key_path = storage_dir_.Append(kEngineKeyFileName);
     const base::FilePath default_path =
         storage_dir_.Append(kDefaultEngineFileName);
@@ -180,13 +200,9 @@ class AdBlockEngines {
         storage_dir_.Append(kAdditionalEngineFileName);
 
     std::string saved_key;
-    std::optional<std::vector<uint8_t>> default_engine;
-    std::optional<std::vector<uint8_t>> additional_engine;
     if (base::ReadFileToString(key_path, &saved_key) && saved_key == key &&
-        (default_engine = base::ReadFileToBytes(default_path)) &&
-        (additional_engine = base::ReadFileToBytes(additional_path)) &&
-        wrapper_->LoadSerialized(true, *default_engine, *resources_) &&
-        wrapper_->LoadSerialized(false, *additional_engine, *resources_)) {
+        LoadSavedEngines()) {
+      loaded_key_ = std::move(key);
       VLOG(1) << "Ad block: loaded saved engines with " << present.size()
               << " lists";
       return present.size();
@@ -220,6 +236,7 @@ class AdBlockEngines {
 
     wrapper_->Load(true, std::move(default_set), *resources_);
     wrapper_->Load(false, std::move(additional_set), *resources_);
+    loaded_key_ = key;
     VLOG(1) << "Ad block: built engines from " << loaded << " lists";
 
     if (loaded == 0) {
@@ -251,9 +268,22 @@ class AdBlockEngines {
   }
 
  private:
+  bool LoadSavedEngines() {
+    std::optional<std::vector<uint8_t>> default_engine =
+        base::ReadFileToBytes(storage_dir_.Append(kDefaultEngineFileName));
+    std::optional<std::vector<uint8_t>> additional_engine =
+        base::ReadFileToBytes(storage_dir_.Append(kAdditionalEngineFileName));
+    return default_engine && additional_engine &&
+           wrapper_->LoadSerialized(true, *default_engine, *resources_) &&
+           wrapper_->LoadSerialized(false, *additional_engine, *resources_);
+  }
+
   const base::FilePath storage_dir_;
+  const base::FilePath resources_dir_;
   const std::unique_ptr<AdBlockEngineWrapper> wrapper_;
   rust::Box<adblock::ResourceStorage> resources_;
+  // The key of the list files the engines hold now.
+  std::string loaded_key_;
 };
 
 AdBlockService::AdBlockService(
@@ -268,12 +298,13 @@ AdBlockService::AdBlockService(
       resources_dir_(resources_dir),
       locale_(locale),
       file_task_runner_(base::ThreadPool::CreateSequencedTaskRunner(
-          {base::MayBlock(), base::TaskPriority::BEST_EFFORT,
+          {base::MayBlock(), base::TaskPriority::USER_VISIBLE,
            base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN})),
       engines_(base::ThreadPool::CreateSequencedTaskRunner(
                    {base::MayBlock(), base::TaskPriority::USER_BLOCKING,
                     base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN}),
-               storage_dir) {}
+               storage_dir,
+               resources_dir) {}
 
 AdBlockService::~AdBlockService() = default;
 
@@ -288,9 +319,10 @@ void AdBlockService::Start() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   CHECK(!started_);
   started_ = true;
+  engines_.AsyncCall(&AdBlockEngines::LoadSaved);
   file_task_runner_->PostTaskAndReplyWithResult(
-      FROM_HERE, base::BindOnce(&ReadBundledData, resources_dir_),
-      base::BindOnce(&AdBlockService::OnBundledDataRead,
+      FROM_HERE, base::BindOnce(&ReadCatalog, resources_dir_),
+      base::BindOnce(&AdBlockService::OnCatalogRead,
                      weak_factory_.GetWeakPtr()));
 }
 
@@ -359,15 +391,11 @@ base::FilePath AdBlockService::GetListPath(const GURL& url) const {
           {base::HexEncodeLower(base::span(hash).first<16>()), ".txt"}));
 }
 
-void AdBlockService::OnBundledDataRead(
-    std::pair<std::string, std::string> data) {
+void AdBlockService::OnCatalogRead(std::string catalog_json) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  catalog_ = ParseFilterListCatalog(data.first);
+  catalog_ = ParseFilterListCatalog(catalog_json);
   VLOG(1) << "Ad block: " << catalog_.size() << " lists in the catalog, "
           << GetEnabledLists().size() << " on";
-
-  engines_.AsyncCall(&AdBlockEngines::SetResources)
-      .WithArgs(std::move(data.second));
   LoadEngines();
 
   pref_change_registrar_.Init(local_state_);
