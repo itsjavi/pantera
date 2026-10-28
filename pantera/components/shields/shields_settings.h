@@ -9,6 +9,10 @@
 
 class HostContentSettingsMap;
 
+namespace content_settings {
+class CookieSettings;
+}  // namespace content_settings
+
 namespace url {
 class Origin;
 }  // namespace url
@@ -35,6 +39,30 @@ void SetAggressiveBlocking(HostContentSettingsMap& map,
 // youtube.com is always blocked aggressively, as in Brave: its ads are
 // first-party.
 bool IsForcedAggressive(const url::Origin& request_initiator);
+
+// The Shields panel's other rows use Chromium's own settings for the site
+// (DECISION-19).
+
+// Whether JavaScript is blocked on `top_url`'s site.
+bool AreScriptsBlocked(const HostContentSettingsMap& map, const GURL& top_url);
+void SetScriptsBlocked(HostContentSettingsMap& map,
+                       const GURL& top_url,
+                       bool blocked);
+
+enum class CookieMode {
+  kBlockThirdParty,
+  kBlockAll,
+  kAllowAll,
+};
+
+// Which cookies `top_url` and the sites it embeds may use.
+CookieMode GetCookieMode(const HostContentSettingsMap& map,
+                         const content_settings::CookieSettings& cookies,
+                         const GURL& top_url);
+void SetCookieMode(const HostContentSettingsMap& map,
+                   content_settings::CookieSettings& cookies,
+                   const GURL& top_url,
+                   CookieMode mode);
 
 }  // namespace pantera
 

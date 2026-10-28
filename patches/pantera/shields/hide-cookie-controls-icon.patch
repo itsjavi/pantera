@@ -1,0 +1,23 @@
+# Hide Chrome's third-party cookies icon in the address bar.
+#
+# The Shields panel sets the same per-site cookie exceptions (DECISION-19), so
+# the eye icon and its bubble would be a second place for one switch, as Brave
+# also found. The controller still runs; its icon never shows. See devbacklog
+# TASK-7.
+
+--- a/chrome/browser/ui/views/location_bar/cookie_controls/cookie_controls_page_action_controller.cc
++++ b/chrome/browser/ui/views/location_bar/cookie_controls/cookie_controls_page_action_controller.cc
+@@ -244,11 +244,8 @@
+ }
+ 
+ void CookieControlsPageActionController::UpdateIconVisibility() {
+-  if (!ShouldShowIcon()) {
+-    page_action_controller_->Hide(kActionShowCookieControls);
+-    return;
+-  }
+-  page_action_controller_->Show(kActionShowCookieControls);
++  // Pantera: third-party cookies are set in the Shields panel instead.
++  page_action_controller_->Hide(kActionShowCookieControls);
+ }
+ 
+ std::u16string CookieControlsPageActionController::GetLabelForState() const {

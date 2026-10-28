@@ -7,6 +7,8 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/test/task_environment.h"
 #include "components/content_settings/core/browser/host_content_settings_map.h"
+#include "components/content_settings/core/common/content_settings.h"
+#include "components/content_settings/core/common/content_settings_types.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
@@ -71,6 +73,25 @@ TEST_F(ShieldsSettingsTest, YouTubeIsAlwaysAggressive) {
       url::Origin::Create(GURL("https://www.youtube.com/watch?v=1"))));
   EXPECT_FALSE(
       IsForcedAggressive(url::Origin::Create(GURL("https://example.com/"))));
+}
+
+TEST_F(ShieldsSettingsTest, ScriptsPerSite) {
+  const GURL url("https://news.example.com/");
+  EXPECT_FALSE(AreScriptsBlocked(*map_, url));
+  SetScriptsBlocked(*map_, url, true);
+  EXPECT_TRUE(AreScriptsBlocked(*map_, url));
+  EXPECT_TRUE(AreScriptsBlocked(*map_, GURL("https://example.com/")));
+  EXPECT_FALSE(AreScriptsBlocked(*map_, GURL("https://example.org/")));
+  SetScriptsBlocked(*map_, url, false);
+  EXPECT_FALSE(AreScriptsBlocked(*map_, url));
+
+  // With scripts blocked everywhere, unblocking a site needs an exception.
+  map_->SetDefaultContentSetting(ContentSettingsType::JAVASCRIPT,
+                                 CONTENT_SETTING_BLOCK);
+  EXPECT_TRUE(AreScriptsBlocked(*map_, url));
+  SetScriptsBlocked(*map_, url, false);
+  EXPECT_FALSE(AreScriptsBlocked(*map_, url));
+  EXPECT_TRUE(AreScriptsBlocked(*map_, GURL("https://example.org/")));
 }
 
 }  // namespace

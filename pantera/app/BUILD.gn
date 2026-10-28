@@ -1,0 +1,12 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//tools/grit/grit_rule.gni")
+
+# Pantera's UI strings, packed into Chrome's locale paks
+# (patches/pantera/browser/add-pantera-strings.patch).
+grit_strings("pantera_strings") {
+  source = "pantera_strings.grd"
+  outputs = [ "grit/pantera_strings.h" ]
+}

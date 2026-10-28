@@ -56,6 +56,11 @@ for the formats, and use its script rather than reading folders by hand.
   - `pantera/browser/`: browser-process code that needs `//chrome/browser`: starting the ad-block
     service and checking web requests against it. `patches/pantera/browser/` and
     `patches/pantera/shields/` hook it in.
+  - `pantera/browser/ui/views/`: Pantera's Views UI, such as the Shields toolbar button and panel
+    (DECISION-19).
+  - `pantera/app/`: Pantera's own UI strings (`pantera_strings.grd`), packed into Chromium's locale
+    files by `patches/pantera/browser/add-pantera-strings.patch`. Add new strings here, not to
+    Chromium's `.grd` files.
 - `downloads-adblock.ini`: pinned uBlock Origin and Brave adblock-resources releases that
   `build.sh` unpacks into `third_party/` for the ad blocker's catalog and `resources.json`
   (DECISION-14, DECISION-15).
@@ -75,7 +80,8 @@ for the formats, and use its script rather than reading folders by hand.
   branding asset, `preview-icons.swift` renders a built app's icon beside system apps, and
   `rebrand_strings.py` (run by `build.sh`) renames Chromium to Pantera in the UI strings and
   rekeys their translations. `recolor-favicons.swift` recolors Chromium's blue page favicons in
-  Pantera's amber, into `branding/overlay/`.
+  Pantera's amber, into `branding/overlay/`. `capture-app-windows.swift` screenshots one process's
+  windows.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
 - `docs/rust-crates.md`: how the Rust crates are vendored and regenerated.
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
@@ -132,6 +138,13 @@ A full Chromium build takes hours and about 100–150 GB of disk, so don't start
   build/src`), apply any new patch with `patch -p1 -d build/src`, then build only what changed with
   `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ninja -C build/src/out/Default <target>`.
   Pantera's unit tests: build `pantera_unittests` and run `build/src/out/Default/pantera_unittests`.
+- UI: send the user screenshots of new or changed UI, in light and dark mode. Copy the built app
+  out of `out/Default`, sign the copy ad hoc (`codesign --force --deep --sign -`), launch it with a
+  scratch `--user-data-dir` and `--use-mock-keychain` (otherwise it asks the Keychain for the
+  installed Pantera's key, and pages hang until someone answers), and capture only its windows with
+  `swift scripts/capture-app-windows.swift <pid> <prefix>`, never the whole screen.
+  `--pantera-show-shields-panel[=advanced|blocked]` opens the Shields panel on the first tab after
+  a few seconds and keeps it open.
 - Icon: run `scripts/build-branding.sh`, then look at `branding/icon-light.png` and `branding/icon-dark.png`.
 - String rename: download `tools/grit` (`https://chromium.googlesource.com/chromium/src/+archive/refs/tags/<version>/tools/grit.tar.gz`),
   the two branded `.grd` files, `settings_chromium_strings.grdp` and their `.xtb` translations

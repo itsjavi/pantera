@@ -1,0 +1,36 @@
+# Add Pantera's Shields button to the toolbar.
+#
+# ShieldsToolbarButton (//pantera/browser/ui/views) goes right of the address
+# bar in normal browser windows. It shows how many requests were blocked on the
+# page and opens the Shields panel (DECISION-19). See devbacklog TASK-7.
+
+--- a/chrome/browser/ui/views/toolbar/toolbar_view.cc
++++ b/chrome/browser/ui/views/toolbar/toolbar_view.cc
+@@ -139,6 +139,7 @@
+ #include "components/strings/grit/components_strings.h"
+ #include "content/public/browser/render_view_host.h"
+ #include "content/public/browser/web_contents.h"
++#include "pantera/browser/ui/views/shields/shields_toolbar_button.h"
+ #include "third_party/skia/include/core/SkPath.h"
+ #include "third_party/skia/include/core/SkPathBuilder.h"
+ #include "ui/accessibility/ax_node_data.h"
+@@ -489,6 +490,9 @@
+   } else {
+     location_bar_ = toolbar_webview_->GetLocationBar();
+   }
++
++  // Pantera's Shields button, right of the address bar.
++  AddChildView(std::make_unique<pantera::ShieldsToolbarButton>(browser_));
+ 
+   bool is_glic_left_of_profile =
+       features::kGlicToolbarButtonLocationParam.Get() ==
+--- a/chrome/browser/ui/views/toolbar/BUILD.gn
++++ b/chrome/browser/ui/views/toolbar/BUILD.gn
+@@ -218,6 +218,7 @@
+   deps = [
+     ":toolbar",
+     "//base:i18n",
++    "//pantera/browser/ui/views:shields",
+     "//build:branding_buildflags",
+     "//cc/paint",
+     "//chrome/app:branded_strings",

@@ -1,0 +1,40 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# The Shields toolbar button and panel (TASK-7, DECISION-19). The toolbar
+# creates the button (patches/pantera/shields/add-shields-button.patch).
+source_set("shields") {
+  sources = [
+    "shields/shields_bubble_view.cc",
+    "shields/shields_bubble_view.h",
+    "shields/shields_toolbar_button.cc",
+    "shields/shields_toolbar_button.h",
+  ]
+  public_deps = [
+    "//chrome/browser/ui/tabs:tab_strip_model_observer",
+    "//chrome/browser/ui/views/toolbar",
+    "//chrome/browser/ui/views/toolbar:toolbar_button",
+    "//pantera/browser",
+    "//ui/views",
+  ]
+  deps = [
+    "//base",
+    "//chrome/browser/content_settings:content_settings_factory",
+    "//chrome/browser/profiles:profile",
+    "//chrome/browser/ui:tab_ui_helper",
+    "//chrome/browser/ui/tabs:tab_strip",
+    "//chrome/browser/ui/views:layout_provider",
+    "//chrome/browser/ui/views/controls",
+    "//components/content_settings/core/browser",
+    "//components/tabs:public",
+    "//components/url_formatter",
+    "//components/vector_icons",
+    "//content/public/browser",
+    "//pantera/app:pantera_strings",
+    "//pantera/components/shields",
+    "//ui/base",
+    "//ui/color",
+    "//ui/gfx",
+  ]
+}

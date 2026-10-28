@@ -1,0 +1,42 @@
+# Pack Pantera's UI strings into Chrome's locale paks.
+#
+# Pantera's own strings live in //pantera/app/pantera_strings.grd, so they can
+# be translated like Chromium's. Locales without a translation show English.
+# The grd gets a resource ID range after Chromium's last one. See devbacklog
+# TASK-7.
+
+--- a/chrome/chrome_repack_locales.gni
++++ b/chrome/chrome_repack_locales.gni
+@@ -42,6 +42,9 @@
+       "${root_gen_dir}/ui/strings/auto_image_annotation_strings_",
+       "${root_gen_dir}/ui/strings/ax_strings_",
+       "${root_gen_dir}/ui/strings/ui_strings_",
++
++      # Pantera's own strings (TASK-7).
++      "${root_gen_dir}/pantera/app/pantera_strings_",
+     ]
+     if (!defined(deps)) {
+       deps = []
+@@ -67,6 +70,7 @@
+       "//ui/strings:auto_image_annotation_strings",
+       "//ui/strings:ax_strings",
+       "//ui/strings:ui_strings",
++      "//pantera/app:pantera_strings",
+     ]
+     if (defined(invoker.deps)) {
+       deps += invoker.deps
+--- a/tools/gritsettings/resource_ids.spec
++++ b/tools/gritsettings/resource_ids.spec
+@@ -1802,6 +1802,12 @@
+   "<(SHARED_INTERMEDIATE_DIR)/THIS_IS_A_PLACEHOLDER.grd": {
+     "META": {"sizes": {"includes": [800]}},
+     "includes": [12000],
++  },
++
++  # Pantera's UI strings, after Chromium's last range (devbacklog TASK-7).
++  "pantera/app/pantera_strings.grd": {
++    "META": {"sizes": {"messages": [200]}},
++    "messages": [12800],
+   },
+ 
+   # END "everything else" section.
