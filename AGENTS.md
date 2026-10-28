@@ -49,6 +49,13 @@ for the formats, and use its script rather than reading folders by hand.
 - `pantera/`: Pantera's own source code, copied to `build/src/pantera` by `build.sh` and built as
   `//pantera` (DECISION-13). Patches only hook it into Chromium. Files ported from brave-core keep
   their MPL-2.0 header and say what changed. Tests go in `pantera_unittests`.
+  - `pantera/components/adblock/`: the ad blocker (engine bridge, engines, filter list catalog
+    and downloads), with no dependency on `//chrome`.
+  - `pantera/browser/`: browser-process code that needs `//chrome/browser`, such as starting the
+    ad-block service; `patches/pantera/browser/` hooks it in.
+- `downloads-adblock.ini`: pinned uBlock Origin and Brave adblock-resources releases that
+  `build.sh` unpacks into `third_party/` for the ad blocker's catalog and `resources.json`
+  (DECISION-14, DECISION-15).
 - `third_party/rust/`: Rust crates Pantera adds to Chromium's, generated with Chromium's gnrt and
   copied over the source by `build.sh`; `patches/pantera/rust/add-adblock-crates.patch` holds the
   matching changes to Chromium's own crate files. Regenerate both with
@@ -117,7 +124,9 @@ A full Chromium build takes hours and about 100–150 GB of disk, so don't start
   base64-encoded) and run `patch --dry-run -p1` there.
 - Code in `pantera/` or `third_party/`, without running `build.sh` (which deletes `out/`): copy
   it into the checkout (`ditto pantera build/src/pantera`, `ditto third_party build/src/third_party`),
-  apply any new patch with `patch -p1 -d build/src`, then build only what changed with
+  unpack `downloads-adblock.ini` into it if its pins changed (`python3
+  ungoogled-chromium/utils/downloads.py unpack -i downloads-adblock.ini -c build/download_cache
+  build/src`), apply any new patch with `patch -p1 -d build/src`, then build only what changed with
   `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ninja -C build/src/out/Default <target>`.
   Pantera's unit tests: build `pantera_unittests` and run `build/src/out/Default/pantera_unittests`.
 - Icon: run `scripts/build-branding.sh`, then look at `branding/icon-light.png` and `branding/icon-dark.png`.

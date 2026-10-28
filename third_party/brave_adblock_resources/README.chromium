@@ -1,0 +1,19 @@
+Name: Brave adblock-resources
+Short Name: brave_adblock_resources
+URL: https://github.com/brave/adblock-resources
+Version: 0
+Revision: 6da9b247c3368baa8b4f24cd02046e18702a6527
+Update Mechanism: Manual
+License: MPL-2.0
+License File: LICENSE
+Security Critical: no
+Shipped: yes
+
+Description:
+Brave's filter list catalog, which names the lists Pantera downloads from
+their maintainers (DECISION-15), and Brave's own scriptlets, which go into
+Pantera's resources.json (DECISION-14). Downloaded at build time from the
+commit pinned in downloads-adblock.ini.
+
+Local Modifications:
+None.

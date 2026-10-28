@@ -2,34 +2,44 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/brave_shields/content/browser/ad_block_engine_wrapper.h).
+// Pantera's changes: request types are strings, serialized engines are plain
+// byte vectors, first-party requests are never blocked by the default engine
+// in standard mode (Brave's kBraveAdblockDefault1pBlocking feature is off),
+// and the trace events, debug info and regex discard policy are gone.
 
-#ifndef BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_WRAPPER_H_
-#define BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_WRAPPER_H_
+#ifndef PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_WRAPPER_H_
+#define PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_WRAPPER_H_
 
 #include <stdint.h>
 
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
+#include <string_view>
 #include <vector>
 
-#include "base/check_is_test.h"
 #include "base/sequence_checker.h"
-#include "base/thread_annotations.h"
 #include "base/values.h"
-#include "brave/components/brave_shields/core/browser/ad_block_resource_provider.h"
-#include "brave/components/brave_shields/core/common/adblock/rs/src/lib.rs.h"
-#include "third_party/blink/public/mojom/loader/resource_load_info.mojom-shared.h"
+#include "pantera/components/adblock/rs/src/lib.rs.h"
+#include "third_party/rust/cxx/v1/cxx.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
-namespace brave_shields {
+namespace pantera {
 
 class AdBlockEngine;
 
-// Wrapper combining the default and additional adblock engines.
-// This class should only be accessed from the adblock task runner.
+// Key for procedural and action filters in adblock-rust's cosmetic resources.
+inline constexpr char kCosmeticResourcesProceduralActions[] =
+    "procedural_actions";
+
+// Brave's two engines: the default engine holds the lists with first-party
+// protections, which standard mode doesn't apply to first-party content
+// (DECISION-16); the additional engine holds every other list and always
+// applies.
 class AdBlockEngineWrapper {
  public:
   AdBlockEngineWrapper(std::unique_ptr<AdBlockEngine> default_engine,
@@ -42,35 +52,27 @@ class AdBlockEngineWrapper {
 
   adblock::BlockerResult ShouldStartRequest(
       const GURL& url,
-      blink::mojom::ResourceType resource_type,
+      std::string_view request_type,
       const url::Origin& request_initiator,
       const std::string& method,
       bool aggressive_blocking,
       bool previously_matched_rule,
       bool previously_matched_exception,
       bool previously_matched_important);
-
-  bool Load(bool is_default_engine,
-            std::unique_ptr<rust::Box<adblock::FilterSet>> filter_set,
-            AdblockResourceStorageBox storage);
-
-  bool LoadDAT(bool is_default_engine,
-               DATFileDataBuffer dat,
-               AdblockResourceStorageBox storage);
-
-  DATFileDataBuffer Serialize(bool is_default_engine);
-
   std::optional<std::string> GetCspDirectives(
       const GURL& url,
-      blink::mojom::ResourceType resource_type,
+      std::string_view request_type,
       const url::Origin& first_party_origin,
       const std::string& method);
 
-  void UseResources(const adblock::BraveCoreResourceStorage& storage);
-
-  std::pair<base::DictValue, base::DictValue> GetDebugInfo();
-  void DiscardRegex(uint64_t regex_id);
-  void SetupDiscardPolicy(const adblock::RegexManagerDiscardPolicy& policy);
+  bool Load(bool is_default_engine,
+            rust::Box<adblock::FilterSet> filter_set,
+            const adblock::ResourceStorage& storage);
+  bool LoadSerialized(bool is_default_engine,
+                      const std::vector<uint8_t>& serialized,
+                      const adblock::ResourceStorage& storage);
+  std::vector<uint8_t> Serialize(bool is_default_engine);
+  void UseResources(const adblock::ResourceStorage& storage);
 
   base::DictValue UrlCosmeticResources(const std::string& url,
                                        bool aggressive_blocking);
@@ -79,24 +81,14 @@ class AdBlockEngineWrapper {
       const std::vector<std::string>& ids,
       const std::vector<std::string>& exceptions);
 
-  AdBlockEngine& default_engine_for_testing() {
-    CHECK_IS_TEST();
-    DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-    return *default_engine_.get();
-  }
-
-  AdBlockEngine& additional_filters_engine_for_testing() {
-    CHECK_IS_TEST();
-    DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-    return *additional_filters_engine_.get();
-  }
-
   static void StripProceduralFilters(base::DictValue& resources);
   static void MergeResourcesInto(base::DictValue from,
                                  base::DictValue& into,
                                  bool force_hide);
 
  private:
+  AdBlockEngine& engine(bool is_default_engine);
+
   const std::unique_ptr<AdBlockEngine> default_engine_
       GUARDED_BY_CONTEXT(sequence_checker_);
   const std::unique_ptr<AdBlockEngine> additional_filters_engine_
@@ -105,6 +97,6 @@ class AdBlockEngineWrapper {
   SEQUENCE_CHECKER(sequence_checker_);
 };
 
-}  // namespace brave_shields
+}  // namespace pantera
 
-#endif  // BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_WRAPPER_H_
+#endif  // PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_WRAPPER_H_

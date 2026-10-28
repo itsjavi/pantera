@@ -43,6 +43,31 @@ usage pings. An opt-in setting for automatic updates is planned.
 
 Pantera contacts Google only when you visit the store, install an extension, or press Update.
 
+## Ad blocking
+
+Pantera blocks ads and trackers with Brave's [adblock-rust](https://github.com/brave/adblock-rust)
+engine and the filter lists Brave turns on by default. The engine and the lists are in place;
+blocking the requests and page elements they match is still being built.
+
+Pantera downloads those lists straight from their maintainers, never through Brave or a Pantera
+server:
+
+- **What:** about 30 list files, from `raw.githubusercontent.com` (uBlock Origin's and Brave's
+  lists), `easylist.to` (EasyList and EasyPrivacy), `secure.fanboy.co.nz` (cookie notices and app
+  promos) and `malware-filter.gitlab.io` (URLhaus). The lists for your language may add
+  `easylist-downloads.adblockplus.org`, `filters.adtidy.org`, `cdn.jsdelivr.net`, `stanev.org` or
+  `ubo-et.lepik.io`.
+- **When:** about 10 seconds after the first start, then whenever a list is due: when its
+  `Expires` header says, weekly for lists without one, and at least every 14 days.
+- **What they see:** your IP address and a request without cookies.
+- **Turning it off:** a settings page is planned. Until then, quit Pantera and add
+  `"pantera": {"adblock": {"list_updates_enabled": false}}` to
+  `~/Library/Application Support/Pantera Browser/Local State`. Pantera then keeps using the
+  lists it already has.
+
+The scriptlets and redirect resources that filter rules use come from uBlock Origin and Brave
+and ship with Pantera, in the app's `Resources/adblock` folder, under uBlock Origin's GPL-3.0.
+
 ## Roadmap
 
 | Phase | Goal | Status |
@@ -63,8 +88,9 @@ Pantera is a set of patches and files applied to Chromium's source at build time
 2. It applies ungoogled-chromium's patches, the macOS patches in `patches/ungoogled-chromium/` and
    Pantera's own patches in `patches/pantera/`, in the order listed in `patches/series`.
 3. It copies `branding/overlay/` over the source (product name, bundle ID, icons), adds Pantera's
-   own code as `//pantera` and the Rust crates it needs to `third_party/rust/`, and renames
-   Chromium to Pantera in the UI strings and their translations.
+   own code as `//pantera` and the Rust crates it needs to `third_party/rust/`, downloads the
+   ad blocker's pinned data (`downloads-adblock.ini`), and renames Chromium to Pantera in the UI
+   strings and their translations.
 4. It builds with the flags in `ungoogled-chromium/flags.gn` and `flags.macos.gn`, then signs and
    packages a `.dmg` with `sign_and_package_app.sh`.
 
@@ -73,7 +99,8 @@ Pantera is a set of patches and files applied to Chromium's source at build time
 | `ungoogled-chromium/` | ungoogled-chromium, as a git submodule pinned to a release |
 | `patches/` | macOS patches from upstream and Pantera's own patches |
 | `branding/` | App icon source (`AppIcon.icon`), icon renders, and the overlay copied over Chromium's source |
-| `pantera/` | Pantera's own code, built as `//pantera`: for now the cxx bridge to adblock-rust, ported from brave-core |
+| `pantera/` | Pantera's own code, built as `//pantera`: the ad blocker, with code ported from brave-core |
+| `downloads-adblock.ini` | Pinned uBlock Origin and Brave sources of the ad blocker's data, downloaded by `build.sh` |
 | `third_party/rust/` | adblock-rust and the crates it needs, vendored with Chromium's gnrt ([docs/rust-crates.md](docs/rust-crates.md)) |
 | `scripts/` | Icon and branding generators |
 | `entitlements/`, `flags.macos.gn`, `downloads-*.ini` | macOS build configuration from upstream |
@@ -151,3 +178,10 @@ Pantera builds on [Chromium](https://www.chromium.org/),
 [ungoogled-chromium-macos](https://github.com/ungoogled-software/ungoogled-chromium-macos).
 Pantera is under the same BSD-3-Clause license as they are, in [LICENSE](LICENSE). Chromium's
 third-party components keep their own licenses.
+
+The ad blocker uses [adblock-rust](https://github.com/brave/adblock-rust) and code ported from
+[brave-core](https://github.com/brave/brave-core), both MPL-2.0; those files keep their license
+headers. Its scriptlets and redirect resources come from
+[uBlock Origin](https://github.com/gorhill/uBlock) (GPL-3.0) and
+[Brave's adblock-resources](https://github.com/brave/adblock-resources) (MPL-2.0), and ship as a
+separate file with their licenses.

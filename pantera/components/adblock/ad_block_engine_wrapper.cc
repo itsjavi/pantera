@@ -2,10 +2,15 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/brave_shields/content/browser/ad_block_engine_wrapper.cc).
+// Pantera's changes: see ad_block_engine_wrapper.h. StripProceduralFilters
+// also no longer loops forever on a non-string entry or dereferences a
+// missing selector list.
 
-#include "brave/components/brave_shields/content/browser/ad_block_engine_wrapper.h"
+#include "pantera/components/adblock/ad_block_engine_wrapper.h"
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -13,25 +18,30 @@
 #include <utility>
 #include <vector>
 
-#include "base/check.h"
 #include "base/debug/leak_annotations.h"
-#include "base/feature_list.h"
 #include "base/json/json_reader.h"
-#include "base/sequence_checker.h"
 #include "base/strings/strcat.h"
-#include "base/trace_event/trace_event.h"
-#include "base/values.h"
-#include "brave/components/brave_shields/content/browser/ad_block_engine.h"
-#include "brave/components/brave_shields/core/browser/ad_block_resource_provider.h"
-#include "brave/components/brave_shields/core/browser/ad_block_service_helper.h"
-#include "brave/components/brave_shields/core/common/adblock/rs/src/lib.rs.h"
-#include "brave/components/brave_shields/core/common/brave_shield_constants.h"
-#include "brave/components/brave_shields/core/common/features.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
-#include "third_party/blink/public/mojom/loader/resource_load_info.mojom-shared.h"
-#include "url/origin.h"
+#include "pantera/components/adblock/ad_block_engine.h"
 
-namespace brave_shields {
+namespace pantera {
+
+namespace {
+
+// Brave's MergeCspDirectiveInto (core/browser/ad_block_service_helper.cc).
+void MergeCspDirectiveInto(std::optional<std::string> from,
+                           std::optional<std::string>* into) {
+  if (!from) {
+    return;
+  }
+  if (!*into) {
+    *into = std::move(from);
+    return;
+  }
+  *into = base::StrCat({*from, ", ", **into});
+}
+
+}  // namespace
 
 AdBlockEngineWrapper::AdBlockEngineWrapper(
     std::unique_ptr<AdBlockEngine> default_engine,
@@ -41,6 +51,7 @@ AdBlockEngineWrapper::AdBlockEngineWrapper(
   // `this` is stored using SequenceBound, so false-positive shutdown leaks
   // are expected
   ANNOTATE_LEAKING_OBJECT_PTR(this);
+  DETACH_FROM_SEQUENCE(sequence_checker_);
 }
 
 AdBlockEngineWrapper::~AdBlockEngineWrapper() = default;
@@ -54,7 +65,7 @@ std::unique_ptr<AdBlockEngineWrapper> AdBlockEngineWrapper::Create() {
 
 adblock::BlockerResult AdBlockEngineWrapper::ShouldStartRequest(
     const GURL& url,
-    blink::mojom::ResourceType resource_type,
+    std::string_view request_type,
     const url::Origin& request_initiator,
     const std::string& method,
     bool aggressive_blocking,
@@ -62,18 +73,15 @@ adblock::BlockerResult AdBlockEngineWrapper::ShouldStartRequest(
     bool previously_matched_exception,
     bool previously_matched_important) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  TRACE_EVENT("brave.adblock", "ShouldStartRequest", "url", url);
 
   adblock::BlockerResult fp_result = default_engine_->ShouldStartRequest(
-      url, resource_type, request_initiator, method, previously_matched_rule,
+      url, request_type, request_initiator, method, previously_matched_rule,
       previously_matched_exception, previously_matched_important);
 
   // removeparam results from the default engine are always ignored
   fp_result.rewritten_url.has_value = false;
 
   if (aggressive_blocking ||
-      base::FeatureList::IsEnabled(
-          brave_shields::features::kBraveAdblockDefault1pBlocking) ||
       !SameDomainOrHost(
           url, request_initiator,
           net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES)) {
@@ -93,7 +101,7 @@ adblock::BlockerResult AdBlockEngineWrapper::ShouldStartRequest(
                          ? GURL(std::string(fp_result.rewritten_url.value))
                          : url;
   auto result = additional_filters_engine_->ShouldStartRequest(
-      request_url, resource_type, request_initiator, method,
+      request_url, request_type, request_initiator, method,
       previously_matched_rule | fp_result.matched,
       previously_matched_exception | fp_result.has_exception,
       previously_matched_important | fp_result.important);
@@ -116,94 +124,53 @@ adblock::BlockerResult AdBlockEngineWrapper::ShouldStartRequest(
   return result;
 }
 
-bool AdBlockEngineWrapper::Load(
-    bool is_default_engine,
-    std::unique_ptr<rust::Box<adblock::FilterSet>> filter_set,
-    AdblockResourceStorageBox storage) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  auto* engine = is_default_engine ? default_engine_.get()
-                                   : additional_filters_engine_.get();
-  if (filter_set) {
-    return engine->Load(std::move(*filter_set), *storage);
-  } else {
-    engine->UseResources(*storage);
-    return true;
-  }
-}
-
-bool AdBlockEngineWrapper::LoadDAT(bool is_default_engine,
-                                   DATFileDataBuffer dat,
-                                   AdblockResourceStorageBox storage) {
-  CHECK(base::FeatureList::IsEnabled(features::kAdblockDATCache));
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  auto* engine = is_default_engine ? default_engine_.get()
-                                   : additional_filters_engine_.get();
-  if (!dat.empty()) {
-    return engine->Load(true, std::move(dat), *storage);
-  } else {
-    engine->UseResources(*storage);
-    return true;
-  }
-}
-
-DATFileDataBuffer AdBlockEngineWrapper::Serialize(bool is_default_engine) {
-  CHECK(base::FeatureList::IsEnabled(features::kAdblockDATCache));
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  auto* engine = is_default_engine ? default_engine_.get()
-                                   : additional_filters_engine_.get();
-  return engine->Serialize();
-}
-
 std::optional<std::string> AdBlockEngineWrapper::GetCspDirectives(
     const GURL& url,
-    blink::mojom::ResourceType resource_type,
+    std::string_view request_type,
     const url::Origin& first_party_origin,
     const std::string& method) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  TRACE_EVENT("brave.adblock", "GetCspDirectives", "url", url);
   auto csp_directives = default_engine_->GetCspDirectives(
-      url, resource_type, first_party_origin, method);
+      url, request_type, first_party_origin, method);
 
   const auto additional_csp = additional_filters_engine_->GetCspDirectives(
-      url, resource_type, first_party_origin, method);
+      url, request_type, first_party_origin, method);
   MergeCspDirectiveInto(additional_csp, &csp_directives);
 
   return csp_directives;
 }
 
+bool AdBlockEngineWrapper::Load(bool is_default_engine,
+                                rust::Box<adblock::FilterSet> filter_set,
+                                const adblock::ResourceStorage& storage) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return engine(is_default_engine).Load(std::move(filter_set), storage);
+}
+
+bool AdBlockEngineWrapper::LoadSerialized(
+    bool is_default_engine,
+    const std::vector<uint8_t>& serialized,
+    const adblock::ResourceStorage& storage) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return engine(is_default_engine).LoadSerialized(serialized, storage);
+}
+
+std::vector<uint8_t> AdBlockEngineWrapper::Serialize(bool is_default_engine) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return engine(is_default_engine).Serialize();
+}
+
 void AdBlockEngineWrapper::UseResources(
-    const adblock::BraveCoreResourceStorage& storage) {
+    const adblock::ResourceStorage& storage) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   default_engine_->UseResources(storage);
   additional_filters_engine_->UseResources(storage);
-}
-
-std::pair<base::DictValue, base::DictValue>
-AdBlockEngineWrapper::GetDebugInfo() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return {default_engine_->GetDebugInfo(),
-          additional_filters_engine_->GetDebugInfo()};
-}
-
-void AdBlockEngineWrapper::DiscardRegex(uint64_t regex_id) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  // Dispatch to both engines since regex IDs are unique across engines.
-  default_engine_->DiscardRegex(regex_id);
-  additional_filters_engine_->DiscardRegex(regex_id);
-}
-
-void AdBlockEngineWrapper::SetupDiscardPolicy(
-    const adblock::RegexManagerDiscardPolicy& policy) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  default_engine_->SetupDiscardPolicy(policy);
-  additional_filters_engine_->SetupDiscardPolicy(policy);
 }
 
 base::DictValue AdBlockEngineWrapper::UrlCosmeticResources(
     const std::string& url,
     bool aggressive_blocking) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  TRACE_EVENT("brave.adblock", "UrlCosmeticResources", "url", url);
 
   base::DictValue resources = default_engine_->UrlCosmeticResources(url);
 
@@ -213,15 +180,10 @@ base::DictValue AdBlockEngineWrapper::UrlCosmeticResources(
     base::ListValue* default_hide_selectors =
         resources.FindList("hide_selectors");
     if (default_hide_selectors) {
-      base::ListValue::iterator it = default_hide_selectors->begin();
-      while (it < default_hide_selectors->end()) {
-        DCHECK(it->is_string());
-        if (it->GetString().find(":has(") != std::string::npos) {
-          it = default_hide_selectors->erase(it);
-        } else {
-          it++;
-        }
-      }
+      default_hide_selectors->EraseIf([](const base::Value& selector) {
+        return selector.is_string() &&
+               selector.GetString().find(":has(") != std::string::npos;
+      });
     }
 
     // In standard blocking mode, drop procedural filters but otherwise keep
@@ -243,8 +205,6 @@ base::DictValue AdBlockEngineWrapper::HiddenClassIdSelectors(
     const std::vector<std::string>& ids,
     const std::vector<std::string>& exceptions) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  TRACE_EVENT("brave.adblock", "HiddenClassIdSelectors", "classes", classes,
-              "ids", ids);
 
   base::ListValue hide_selectors =
       default_engine_->HiddenClassIdSelectors(classes, ids, exceptions);
@@ -269,39 +229,31 @@ base::DictValue AdBlockEngineWrapper::HiddenClassIdSelectors(
 // https://docs.rs/adblock/latest/adblock/cosmetic_filter_cache/struct.ProceduralOrActionFilter.html
 // static
 void AdBlockEngineWrapper::StripProceduralFilters(base::DictValue& resources) {
-  TRACE_EVENT("brave.adblock", "StripProceduralFilters");
   base::ListValue* procedural_actions =
       resources.FindList(kCosmeticResourcesProceduralActions);
-  if (procedural_actions) {
-    base::ListValue::iterator it = procedural_actions->begin();
-    while (it < procedural_actions->end()) {
-      DCHECK(it->is_string());
-      auto* pfilter_str = it->GetIfString();
-      if (pfilter_str == nullptr) {
-        continue;
-      }
-      auto val = base::JSONReader::ReadDict(*pfilter_str, base::JSON_PARSE_RFC);
-      if (val) {
-        auto* list = val->FindList("selector");
-        if (list && list->size() != 1) {
-          // Non-procedural filters are always a single operator in length.
-          it = procedural_actions->erase(it);
-          continue;
-        }
-        // The single operator must also be a `css-selector`.
-        auto op_iterator = list->begin();
-        auto* dict = op_iterator->GetIfDict();
-        if (dict) {
-          auto* str = dict->FindString("type");
-          if (str && *str != "css-selector") {
-            it = procedural_actions->erase(it);
-            continue;
-          }
-        }
-      }
-      it++;
-    }
+  if (!procedural_actions) {
+    return;
   }
+  procedural_actions->EraseIf([](const base::Value& filter) {
+    const std::string* filter_json = filter.GetIfString();
+    if (!filter_json) {
+      return false;
+    }
+    std::optional<base::DictValue> parsed =
+        base::JSONReader::ReadDict(*filter_json, base::JSON_PARSE_RFC);
+    if (!parsed) {
+      return false;
+    }
+    const base::ListValue* selector = parsed->FindList("selector");
+    // Non-procedural filters are always a single operator in length, and
+    // that operator must be a `css-selector`.
+    if (!selector || selector->size() != 1) {
+      return true;
+    }
+    const base::DictValue* op = selector->front().GetIfDict();
+    const std::string* type = op ? op->FindString("type") : nullptr;
+    return type && *type != "css-selector";
+  });
 }
 
 // Merges the contents of the first UrlCosmeticResources Value into the second
@@ -313,7 +265,6 @@ void AdBlockEngineWrapper::StripProceduralFilters(base::DictValue& resources) {
 void AdBlockEngineWrapper::MergeResourcesInto(base::DictValue from,
                                               base::DictValue& into,
                                               bool force_hide) {
-  TRACE_EVENT("brave.adblock", "MergeResourcesInto");
   base::ListValue* resources_hide_selectors = nullptr;
   if (force_hide) {
     resources_hide_selectors = into.FindList("force_hide_selectors");
@@ -358,4 +309,9 @@ void AdBlockEngineWrapper::MergeResourcesInto(base::DictValue from,
   }
 }
 
-}  // namespace brave_shields
+AdBlockEngine& AdBlockEngineWrapper::engine(bool is_default_engine) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return is_default_engine ? *default_engine_ : *additional_filters_engine_;
+}
+
+}  // namespace pantera

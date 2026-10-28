@@ -7,7 +7,7 @@ import("//testing/test.gni")
 # Unit tests for Pantera's own code under //pantera.
 test("pantera_unittests") {
   deps = [
-    "//base/test:run_all_unittests",
+    "//mojo/core/test:run_all_unittests",
     "//pantera/components/adblock:unit_tests",
   ]
 }

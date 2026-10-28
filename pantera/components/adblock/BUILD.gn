@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//build/rust/rust_static_library.gni")
+import("//third_party/node/node.gni")
 
 # Brave's adblock-rust engine (//third_party/rust/adblock) behind the cxx bridge
 # from brave-core. rs/ and resolver/ are ported from brave-core's
@@ -47,12 +48,114 @@ static_library("resolver") {
   ]
 }
 
+# The ad-block service: Brave's two engines (ported from brave-core, MPL-2.0),
+# the filter list catalog and the downloads that keep the lists up to date.
+source_set("service") {
+  sources = [
+    "ad_block_engine.cc",
+    "ad_block_engine.h",
+    "ad_block_engine_wrapper.cc",
+    "ad_block_engine_wrapper.h",
+    "ad_block_service.cc",
+    "ad_block_service.h",
+    "filter_list_catalog.cc",
+    "filter_list_catalog.h",
+    "filter_list_preprocessor.cc",
+    "filter_list_preprocessor.h",
+    "pref_names.h",
+  ]
+  public_deps = [
+    ":adblock",
+    "//base",
+    "//components/prefs",
+    "//url",
+  ]
+  deps = [
+    "//crypto",
+    "//net",
+    "//services/network/public/cpp",
+  ]
+}
+
+# uBlock Origin's scriptlets and redirect resources, with Brave's, generated
+# from the sources downloads-adblock.ini pins (DECISION-14).
+node("resources_json") {
+  script = "//third_party/node/node.py"
+  inputs = [
+    "resources/build_adblock_resources.mjs",
+    "//third_party/brave_adblock_resources/dist/resources.json",
+    "//third_party/ublock/src/js/redirect-resources.js",
+    "//third_party/ublock/src/js/resources/scriptlets.js",
+  ]
+  outputs = [ "$target_gen_dir/resources.json" ]
+  args = [
+    rebase_path("resources/build_adblock_resources.mjs", root_build_dir),
+    rebase_path("//third_party/ublock", root_build_dir),
+    rebase_path("//third_party/brave_adblock_resources", root_build_dir),
+    rebase_path(outputs[0], root_build_dir),
+  ]
+}
+
+# The catalog, resources.json and their licenses, in the app's
+# Resources/adblock folder. resources.json is GPL-3.0 and stays a separate
+# file.
+if (is_mac) {
+  group("bundle_data") {
+    public_deps = [
+      ":bundle_brave_license",
+      ":bundle_catalog",
+      ":bundle_readme",
+      ":bundle_resources_json",
+      ":bundle_ublock_license",
+    ]
+  }
+
+  bundle_data("bundle_resources_json") {
+    sources = get_target_outputs(":resources_json")
+    outputs = [ "{{bundle_resources_dir}}/adblock/resources.json" ]
+    public_deps = [ ":resources_json" ]
+  }
+
+  bundle_data("bundle_catalog") {
+    sources = [
+      "//third_party/brave_adblock_resources/filter_lists/list_catalog.json",
+    ]
+    outputs = [ "{{bundle_resources_dir}}/adblock/list_catalog.json" ]
+  }
+
+  bundle_data("bundle_readme") {
+    sources = [ "resources/README.txt" ]
+    outputs = [ "{{bundle_resources_dir}}/adblock/README.txt" ]
+  }
+
+  bundle_data("bundle_ublock_license") {
+    sources = [ "//third_party/ublock/LICENSE.txt" ]
+    outputs = [ "{{bundle_resources_dir}}/adblock/LICENSE-uBlock-Origin.txt" ]
+  }
+
+  bundle_data("bundle_brave_license") {
+    sources = [ "//third_party/brave_adblock_resources/LICENSE" ]
+    outputs = [ "{{bundle_resources_dir}}/adblock/LICENSE-Brave.txt" ]
+  }
+}
+
 source_set("unit_tests") {
   testonly = true
-  sources = [ "adblock_rust_unittest.cc" ]
+  sources = [
+    "ad_block_engine_wrapper_unittest.cc",
+    "ad_block_service_unittest.cc",
+    "adblock_rust_unittest.cc",
+    "filter_list_catalog_unittest.cc",
+    "filter_list_preprocessor_unittest.cc",
+  ]
   deps = [
     ":adblock",
     ":resolver",
+    ":service",
+    "//base/test:test_support",
+    "//components/prefs:test_support",
+    "//services/network:test_support",
+    "//services/network/public/cpp",
     "//testing/gmock",
     "//testing/gtest",
   ]

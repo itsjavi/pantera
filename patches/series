@@ -47,3 +47,5 @@ pantera/settings/about-page-versions.patch
 pantera/settings/about-page-license.patch
 pantera/gn/build-pantera-targets.patch
 pantera/rust/add-adblock-crates.patch
+pantera/browser/add-pantera-browser-parts.patch
+pantera/shields/bundle-adblock-data.patch

@@ -1,0 +1,17 @@
+# Bundle the ad blocker's data in the app.
+#
+# Brave's filter list catalog, the resources.json built from uBlock Origin's
+# and Brave's scriptlets, and their licenses go into the framework's
+# Resources/adblock folder. resources.json is GPL-3.0 and stays a file of its
+# own (DECISION-14). See devbacklog TASK-32.
+
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -1096,6 +1096,7 @@
+       ":packed_resources",
+       "//chrome/app_shim:app_mode_loader_plist_bundle_data",
+       "//chrome/browser/mac:install",
++      "//pantera/components/adblock:bundle_data",
+     ]
+ 
+     if (icu_use_data_file) {

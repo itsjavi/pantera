@@ -28,9 +28,9 @@ std::string ToString(const rust::String& text) {
 class AdblockRustTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() {
-    // The resolver can be set once per process; later calls return false.
-    static const bool kResolverSet = set_domain_resolver();
-    ASSERT_TRUE(kResolverSet);
+    // The resolver can be set once per process, and other tests may have set
+    // it already; later calls return false.
+    set_domain_resolver();
   }
 
   static rust::Box<Engine> MakeEngine(std::string_view rules) {

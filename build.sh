@@ -81,6 +81,10 @@ ditto "$_root_dir/branding/overlay" "$_src_dir"
 # Chromium's in third_party/rust (DECISION-13).
 ditto "$_root_dir/pantera" "$_src_dir/pantera"
 ditto "$_root_dir/third_party" "$_src_dir/third_party"
+# The ad blocker's data comes from pinned uBlock Origin and Brave releases
+# (DECISION-14, DECISION-15).
+python3 "$_main_repo/utils/downloads.py" retrieve -i "$_root_dir/downloads-adblock.ini" -c "$_download_cache"
+python3 "$_main_repo/utils/downloads.py" unpack -i "$_root_dir/downloads-adblock.ini" -c "$_download_cache" "$_src_dir"
 # Pantera's own version (VERSION) reaches the code as PANTERA_VERSION_STRING in
 # chrome_version.h, which Chromium generates from the BRANDING file.
 printf 'PANTERA_VERSION=%s\n' "$(cat "$_root_dir/VERSION")" \

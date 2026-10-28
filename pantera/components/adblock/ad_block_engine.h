@@ -2,38 +2,33 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/brave_shields/content/browser/ad_block_engine.h).
+// Pantera's changes: request types are adblock-rust's strings rather than
+// Blink's enum, serialized engines are plain byte vectors, and the histograms,
+// trace events, debug info and regex discard policy are gone.
 
-#ifndef BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_H_
-#define BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_H_
+#ifndef PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_H_
+#define PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_H_
 
 #include <stdint.h>
 
-#include <memory>
 #include <optional>
-#include <set>
 #include <string>
-#include <utility>
+#include <string_view>
 #include <vector>
 
 #include "base/sequence_checker.h"
 #include "base/values.h"
-#include "brave/components/brave_component_updater/browser/dat_file_util.h"
-#include "brave/components/brave_shields/core/common/adblock/rs/src/lib.rs.h"
-#include "third_party/blink/public/mojom/loader/resource_load_info.mojom-shared.h"
+#include "pantera/components/adblock/rs/src/lib.rs.h"
 #include "third_party/rust/cxx/v1/cxx.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
-using brave_component_updater::DATFileDataBuffer;
+namespace pantera {
 
-class AdBlockServiceTest;
-class BraveAdBlockTPNetworkDelegateHelperTest;
-class EphemeralStorage1pDomainBlockBrowserTest;
-class PerfPredictorTabHelperTest;
-
-namespace brave_shields {
-
-// Service managing an adblock engine.
+// One adblock-rust engine. Lives on a single sequence.
 class AdBlockEngine {
  public:
   explicit AdBlockEngine(bool is_default_engine);
@@ -41,9 +36,11 @@ class AdBlockEngine {
   AdBlockEngine& operator=(const AdBlockEngine&) = delete;
   ~AdBlockEngine();
 
+  // `request_type` is one of adblock-rust's request types, such as "script"
+  // or "image".
   adblock::BlockerResult ShouldStartRequest(
       const GURL& url,
-      blink::mojom::ResourceType resource_type,
+      std::string_view request_type,
       const url::Origin& request_initiator,
       const std::string& method,
       bool previously_matched_rule,
@@ -51,14 +48,10 @@ class AdBlockEngine {
       bool previously_matched_important);
   std::optional<std::string> GetCspDirectives(
       const GURL& url,
-      blink::mojom::ResourceType resource_type,
+      std::string_view request_type,
       const url::Origin& first_party_origin,
       const std::string& method);
-  void UseResources(const adblock::BraveCoreResourceStorage& storage);
-
-  base::DictValue GetDebugInfo();
-  void DiscardRegex(uint64_t regex_id);
-  void SetupDiscardPolicy(const adblock::RegexManagerDiscardPolicy& policy);
+  void UseResources(const adblock::ResourceStorage& storage);
 
   base::DictValue UrlCosmeticResources(const std::string& url);
   base::ListValue HiddenClassIdSelectors(
@@ -66,43 +59,28 @@ class AdBlockEngine {
       const std::vector<std::string>& ids,
       const std::vector<std::string>& exceptions);
 
-  bool Load(bool deserialize,
-            const DATFileDataBuffer& dat_buf,
-            const adblock::BraveCoreResourceStorage& storage);
+  // Replaces the engine with one built from `filter_set`, or with a serialized
+  // engine. Returns false, keeping the current engine, if that fails.
   bool Load(rust::Box<adblock::FilterSet> filter_set,
-            const adblock::BraveCoreResourceStorage& storage);
+            const adblock::ResourceStorage& storage);
+  bool LoadSerialized(const std::vector<uint8_t>& serialized,
+                      const adblock::ResourceStorage& storage);
 
-  DATFileDataBuffer Serialize();
+  // Empty if serialization fails.
+  std::vector<uint8_t> Serialize();
 
- protected:
-  void AddKnownTagsToAdBlockInstance();
+ private:
   void UpdateAdBlockClient(rust::Box<adblock::Engine> ad_block_client,
-                           const adblock::BraveCoreResourceStorage& storage);
-
-  bool OnFilterSetLoaded(rust::Box<adblock::FilterSet> filter_set,
-                         const adblock::BraveCoreResourceStorage& storage);
-  bool OnListSourceLoaded(const DATFileDataBuffer& filters,
-                          const adblock::BraveCoreResourceStorage& storage);
-  bool OnDATLoaded(const DATFileDataBuffer& dat_buf,
-                   const adblock::BraveCoreResourceStorage& storage);
+                           const adblock::ResourceStorage& storage);
 
   rust::Box<adblock::Engine> ad_block_client_
       GUARDED_BY_CONTEXT(sequence_checker_);
 
- private:
-  friend class ::AdBlockServiceTest;
-  friend class ::BraveAdBlockTPNetworkDelegateHelperTest;
-  friend class ::EphemeralStorage1pDomainBlockBrowserTest;
-  friend class ::PerfPredictorTabHelperTest;
-
-  std::optional<adblock::RegexManagerDiscardPolicy> regex_discard_policy_
-      GUARDED_BY_CONTEXT(sequence_checker_);
-
-  bool is_default_engine_;
+  const bool is_default_engine_;
 
   SEQUENCE_CHECKER(sequence_checker_);
 };
 
-}  // namespace brave_shields
+}  // namespace pantera
 
-#endif  // BRAVE_COMPONENTS_BRAVE_SHIELDS_CONTENT_BROWSER_AD_BLOCK_ENGINE_H_
+#endif  // PANTERA_COMPONENTS_ADBLOCK_AD_BLOCK_ENGINE_H_

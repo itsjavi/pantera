@@ -1,0 +1,24 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Pantera's browser-process code. Chrome's //chrome/browser:core adds
+# PanteraBrowserMainExtraParts and //chrome/browser/prefs registers Pantera's
+# prefs (patches/pantera/browser/add-pantera-browser-parts.patch).
+source_set("browser") {
+  sources = [
+    "pantera_browser_main_extra_parts.cc",
+    "pantera_browser_main_extra_parts.h",
+    "pantera_prefs.cc",
+    "pantera_prefs.h",
+  ]
+  public_deps = [ "//chrome/browser:main_extra_parts" ]
+  deps = [
+    "//base",
+    "//chrome/browser:browser_process",
+    "//chrome/common:constants",
+    "//components/prefs",
+    "//pantera/components/adblock:service",
+    "//services/network/public/cpp",
+  ]
+}
