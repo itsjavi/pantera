@@ -1,0 +1,81 @@
+# Add per-site settings for Pantera's shields.
+#
+# PANTERA_SHIELDS turns Pantera's protections off for a site (BLOCK), and
+# PANTERA_FIRST_PARTY_ADS switches a site from standard to aggressive ad
+# blocking (BLOCK), as DECISION-17 describes. Both are keyed on the top-level
+# site, inherited in incognito and not synced. The UMA and site settings tables
+# list every type, so they gain the two as well. See devbacklog TASK-8.
+
+--- a/components/content_settings/core/common/content_settings_types.mojom
++++ b/components/content_settings/core/common/content_settings_types.mojom
+@@ -483,5 +483,16 @@
+ 
+   // Stores allowlist decisions for Suspicious Site Warnings.
+   SUSPICIOUS_SITE_WARNING_DATA,
++
++  // Pantera: whether Pantera's protections, such as its ad blocker, run on a
++  // site. ALLOW (the default) means they do; BLOCK means the user turned them
++  // off for the site. Keyed on the top-level site.
++  PANTERA_SHIELDS,
++
++  // Pantera: whether the ad blocker spares a site's first-party ads and
++  // trackers. ALLOW (the default) is standard blocking; BLOCK is aggressive
++  // blocking, which applies every filter rule to first-party content too.
++  // Keyed on the top-level site.
++  PANTERA_FIRST_PARTY_ADS,
+ };
+ // LINT.ThenChange(//components/content_settings/core/common/content_settings_uma_constants.h:kContentSettingsTypeToHistogramValue)
+--- a/components/content_settings/core/common/content_settings_uma_constants.h
++++ b/components/content_settings/core/common/content_settings_uma_constants.h
+@@ -171,6 +171,10 @@
+         {ContentSettingsType::SUB_APPS_WITHOUT_PROMPTS, 145},
+         {ContentSettingsType::INLINE_CUE_MENU, 146},
+         {ContentSettingsType::SUSPICIOUS_SITE_WARNING_DATA, 147},
++        // Pantera's types. Pantera records no metrics; the values only keep
++        // the table complete.
++        {ContentSettingsType::PANTERA_SHIELDS, 148},
++        {ContentSettingsType::PANTERA_FIRST_PARTY_ADS, 149},
+ 
+         // As mentioned at the top, please don't forget to update ContentType in
+         // enums.xml when you add entries here!
+--- a/components/content_settings/core/browser/content_settings_registry.cc
++++ b/components/content_settings/core/browser/content_settings_registry.cc
+@@ -829,6 +829,27 @@
+            WebsiteSettingsRegistry::DESKTOP,
+            ContentSettingsInfo::INHERIT_IN_INCOGNITO,
+            PermissionSettingsInfo::EXCEPTIONS_ON_SECURE_AND_INSECURE_ORIGINS);
++
++  // Pantera's shields: on or off per site, and standard or aggressive ad
++  // blocking per site (DECISION-17).
++  Register(ContentSettingsType::PANTERA_SHIELDS, "pantera-shields",
++           CONTENT_SETTING_ALLOW, WebsiteSettingsInfo::UNSYNCABLE,
++           /*allowlisted_primary_schemes=*/{},
++           /*valid_settings=*/{CONTENT_SETTING_ALLOW, CONTENT_SETTING_BLOCK},
++           WebsiteSettingsInfo::TOP_ORIGIN_ONLY_SCOPE,
++           WebsiteSettingsRegistry::DESKTOP,
++           ContentSettingsInfo::INHERIT_IN_INCOGNITO,
++           PermissionSettingsInfo::EXCEPTIONS_ON_SECURE_AND_INSECURE_ORIGINS);
++
++  Register(ContentSettingsType::PANTERA_FIRST_PARTY_ADS,
++           "pantera-first-party-ads", CONTENT_SETTING_ALLOW,
++           WebsiteSettingsInfo::UNSYNCABLE,
++           /*allowlisted_primary_schemes=*/{},
++           /*valid_settings=*/{CONTENT_SETTING_ALLOW, CONTENT_SETTING_BLOCK},
++           WebsiteSettingsInfo::TOP_ORIGIN_ONLY_SCOPE,
++           WebsiteSettingsRegistry::DESKTOP,
++           ContentSettingsInfo::INHERIT_IN_INCOGNITO,
++           PermissionSettingsInfo::EXCEPTIONS_ON_SECURE_AND_INSECURE_ORIGINS);
+ }
+ 
+ void ContentSettingsRegistry::Register(
+--- a/chrome/browser/ui/webui/settings/site_settings_helper.cc
++++ b/chrome/browser/ui/webui/settings/site_settings_helper.cc
+@@ -262,6 +262,8 @@
+     {ContentSettingsType::LOCAL_NETWORK_ACCESS, nullptr},
+     {ContentSettingsType::SUB_APPS_WITHOUT_PROMPTS, nullptr},
+     {ContentSettingsType::SUSPICIOUS_SITE_WARNING_DATA, nullptr},
++    {ContentSettingsType::PANTERA_SHIELDS, nullptr},
++    {ContentSettingsType::PANTERA_FIRST_PARTY_ADS, nullptr},
+ });
+ 
+ static_assert(

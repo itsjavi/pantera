@@ -3,22 +3,44 @@
 # found in the LICENSE file.
 
 # Pantera's browser-process code. Chrome's //chrome/browser:core adds
-# PanteraBrowserMainExtraParts and //chrome/browser/prefs registers Pantera's
-# prefs (patches/pantera/browser/add-pantera-browser-parts.patch).
+# PanteraBrowserMainExtraParts and the ad blocker's URL loader factory proxy,
+# and //chrome/browser/prefs registers Pantera's prefs (patches in
+# patches/pantera/browser/).
 source_set("browser") {
   sources = [
+    "adblock/ad_block_proxying_url_loader_factory.cc",
+    "adblock/ad_block_proxying_url_loader_factory.h",
+    "adblock/ad_block_request_type.cc",
+    "adblock/ad_block_request_type.h",
+    "adblock/ad_block_tab_helper.cc",
+    "adblock/ad_block_tab_helper.h",
     "pantera_browser_main_extra_parts.cc",
     "pantera_browser_main_extra_parts.h",
     "pantera_prefs.cc",
     "pantera_prefs.h",
   ]
-  public_deps = [ "//chrome/browser:main_extra_parts" ]
+  public_deps = [
+    "//chrome/browser:main_extra_parts",
+    "//content/public/browser",
+    "//services/network/public/cpp",
+    "//services/network/public/mojom",
+    "//third_party/blink/public/mojom:mojom_platform_shared",
+  ]
   deps = [
     "//base",
     "//chrome/browser:browser_process",
+    "//chrome/browser/content_settings:content_settings_factory",
+    "//chrome/browser/profiles:profile",
     "//chrome/common:constants",
+    "//components/content_settings/core/browser",
     "//components/prefs",
+    "//extensions/common:common_constants",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/system",
+    "//net",
+    "//pantera/components/adblock",
     "//pantera/components/adblock:service",
-    "//services/network/public/cpp",
+    "//pantera/components/adblock:stub_response",
+    "//pantera/components/shields",
   ]
 }

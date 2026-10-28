@@ -1,0 +1,31 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Per-site shields settings, stored as content settings (DECISION-17).
+source_set("shields") {
+  sources = [
+    "shields_settings.cc",
+    "shields_settings.h",
+  ]
+  public_deps = [ "//url" ]
+  deps = [
+    "//base",
+    "//components/content_settings/core/browser",
+    "//components/content_settings/core/common",
+    "//net",
+  ]
+}
+
+source_set("unit_tests") {
+  testonly = true
+  sources = [ "shields_settings_unittest.cc" ]
+  deps = [
+    ":shields",
+    "//base/test:test_support",
+    "//components/content_settings/core/browser",
+    "//components/content_settings/core/common",
+    "//components/sync_preferences:test_support",
+    "//testing/gtest",
+  ]
+}

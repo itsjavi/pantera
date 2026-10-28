@@ -51,8 +51,11 @@ for the formats, and use its script rather than reading folders by hand.
   their MPL-2.0 header and say what changed. Tests go in `pantera_unittests`.
   - `pantera/components/adblock/`: the ad blocker (engine bridge, engines, filter list catalog
     and downloads), with no dependency on `//chrome`.
-  - `pantera/browser/`: browser-process code that needs `//chrome/browser`, such as starting the
-    ad-block service; `patches/pantera/browser/` hooks it in.
+  - `pantera/components/shields/`: per-site shields settings, stored in the PANTERA_SHIELDS and
+    PANTERA_FIRST_PARTY_ADS content settings (DECISION-17).
+  - `pantera/browser/`: browser-process code that needs `//chrome/browser`: starting the ad-block
+    service and checking web requests against it. `patches/pantera/browser/` and
+    `patches/pantera/shields/` hook it in.
 - `downloads-adblock.ini`: pinned uBlock Origin and Brave adblock-resources releases that
   `build.sh` unpacks into `third_party/` for the ad blocker's catalog and `resources.json`
   (DECISION-14, DECISION-15).

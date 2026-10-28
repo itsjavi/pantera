@@ -2,8 +2,12 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/brave_shields/content/browser/adblock_stub_response.cc).
+// Pantera's changes: include path and namespace.
 
-#include "brave/components/brave_shields/content/browser/adblock_stub_response.h"
+#include "pantera/components/adblock/adblock_stub_response.h"
 
 #include <optional>
 #include <string>
@@ -19,7 +23,7 @@
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/mojom/url_response_head.mojom.h"
 
-namespace brave_shields {
+namespace pantera {
 namespace {
 
 // Everything but jpeg is a transparent pixel.
@@ -172,4 +176,4 @@ void MakeStubResponse(const std::optional<std::string>& data_url,
       net::HttpUtil::AssembleRawHeaders(raw_headers));
 }
 
-}  // namespace brave_shields
+}  // namespace pantera

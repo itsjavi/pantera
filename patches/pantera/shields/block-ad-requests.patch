@@ -1,0 +1,29 @@
+# Check web requests against Pantera's ad blocker.
+#
+# AdBlockProxyingURLLoaderFactory (//pantera/browser/adblock) goes into the
+# URL loader factories of pages, frames and workers, after the extensions'
+# webRequest proxy. It blocks the requests the filter lists match, or answers
+# them with a `$redirect` resource. See devbacklog TASK-8.
+
+--- a/chrome/browser/chrome_content_browser_client.cc
++++ b/chrome/browser/chrome_content_browser_client.cc
+@@ -413,6 +413,7 @@
+ #include "net/ssl/client_cert_store.h"
+ #include "net/ssl/ssl_cert_request_info.h"
+ #include "net/ssl/ssl_private_key.h"
++#include "pantera/browser/adblock/ad_block_proxying_url_loader_factory.h"
+ #include "pdf/buildflags.h"
+ #include "printing/buildflags/buildflags.h"
+ #include "sandbox/policy/features.h"
+@@ -6803,6 +6804,11 @@
+     }
+   }
+ #endif
++
++  // Pantera's ad blocker checks web requests before they reach the network.
++  pantera::AdBlockProxyingURLLoaderFactory::MaybeProxyRequest(
++      browser_context, frame, type, request_initiator, isolation_info,
++      factory_builder);
+ 
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
+     BUILDFLAG(IS_CHROMEOS)
