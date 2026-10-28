@@ -20,7 +20,7 @@ pages lose the ads that request blocking alone can't remove.
       Chromium's TypeScript tooling into a resource
 - [ ] Specific and generic hiding, procedural filters and scriptlets work; scriptlets run in the
       page's main world, and trusted scriptlets only come from lists allowed to use them
-- [ ] Standard and aggressive modes behave as DECISION-16 says, and nothing runs with shields off
+- [ ] Standard and aggressive modes behave as DECISION-17 says, and nothing runs with shields off
 - [ ] Checked in the build: a test page's elements are hidden, a `+js()` scriptlet runs, and
       YouTube plays without ads
 

@@ -14,7 +14,7 @@ their own filters and subscribe to lists by URL.
 
 ## Acceptance criteria
 
-- [ ] The page sets the default mode (standard or aggressive, DECISION-16)
+- [ ] The page sets the default mode (standard or aggressive, DECISION-17)
 - [ ] It lists the catalog's filter lists with on/off switches and when each was last updated,
       plus "Update now" and the setting that turns updates off
 - [ ] Users can add their own filters and subscribe to filter lists by URL

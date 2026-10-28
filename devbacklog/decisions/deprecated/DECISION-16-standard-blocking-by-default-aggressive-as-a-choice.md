@@ -3,6 +3,7 @@ id: DECISION-16
 title: Standard blocking by default, aggressive as a choice
 date: 2026-10-28
 tasks: [TASK-8, TASK-33]
+replaced_by: DECISION-17
 ---
 
 ## Context

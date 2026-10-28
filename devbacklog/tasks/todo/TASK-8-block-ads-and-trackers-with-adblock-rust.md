@@ -21,7 +21,7 @@ shields settings and a per-tab count of what was blocked, ported from brave-core
       `ERR_BLOCKED_BY_CLIENT`
 - [ ] `$redirect` answers with the bundled resource, `$removeparam` rewrites the URL and `$csp`
       adds its directives to documents
-- [ ] First-party requests follow DECISION-16, and nothing is blocked on a site with shields off
+- [ ] First-party requests follow DECISION-17, and nothing is blocked on a site with shields off
 - [ ] A tab helper counts blocked requests per page for the panel (TASK-7)
 - [ ] Checked in the build: ad and tracker requests are blocked on a news site, first-party ones
       are allowed in standard mode and blocked in aggressive mode

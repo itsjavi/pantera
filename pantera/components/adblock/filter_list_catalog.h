@@ -49,7 +49,7 @@ struct FilterListCatalogEntry {
   bool hidden = false;
   bool default_enabled = false;
   // In standard mode, these lists don't apply to first-party content
-  // (DECISION-16). They go to the default engine.
+  // (DECISION-17). They go to the default engine.
   bool first_party_protections = false;
   // Scriptlet permissions: bit 0 lets a list use uBlock Origin's trusted
   // scriptlets.

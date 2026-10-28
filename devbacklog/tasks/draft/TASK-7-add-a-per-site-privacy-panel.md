@@ -21,4 +21,4 @@ and HTTPS upgrades, built on Chromium's existing per-site settings.
 Port Brave's logic where useful, not its UI, which is tied to Brave's WebUI and design system.
 
 Since 2026-10-28 it depends on TASK-8: the panel shows the per-tab blocked count and switches
-shields and the ad-block mode (DECISION-16) for the site, as well as Chromium's own settings.
+shields and the ad-block mode (DECISION-17) for the site, as well as Chromium's own settings.

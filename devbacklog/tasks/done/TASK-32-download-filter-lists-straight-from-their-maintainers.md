@@ -77,11 +77,11 @@ scriptlets and redirect resources bundled as a separate file (DECISION-14).
   State until TASK-34 adds the switch.
 - Brave's packager also sanity-checks each list against known-good requests before shipping
   it. That isn't ported.
-- DECISION-16 says lists with first-party protections still block first-party requests with
+- DECISION-16 said lists with first-party protections still block first-party requests with
   `$important`. brave-core's code doesn't: in standard mode it drops every default-engine match
   for first-party requests, `$important` included. The port follows the code
-  (`AdBlockEngineWrapperTest.ImportantDefaultRules`); the decision's wording needs the user's
-  call.
+  (`AdBlockEngineWrapperTest.ImportantDefaultRules`), and on 2026-10-28 the user chose that
+  behavior: DECISION-17 replaces DECISION-16.
 
 ### Checked (2026-10-28)
 

@@ -38,7 +38,7 @@ inline constexpr char kCosmeticResourcesProceduralActions[] =
 
 // Brave's two engines: the default engine holds the lists with first-party
 // protections, which standard mode doesn't apply to first-party content
-// (DECISION-16); the additional engine holds every other list and always
+// (DECISION-17); the additional engine holds every other list and always
 // applies.
 class AdBlockEngineWrapper {
  public:
