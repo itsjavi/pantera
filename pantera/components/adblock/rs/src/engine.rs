@@ -1,26 +1,28 @@
 /* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/brave_shields/core/common/adblock/rs/src/engine.rs).
+ * Pantera's changes: ResourceStorage renamed from BraveCoreResourceStorage,
+ * iOS content-blocking conversion removed. */
 
 use std::collections::HashSet;
 use std::str::Utf8Error;
 
-use crate::resource_storage::BraveCoreResourceStorage;
+use crate::resource_storage::ResourceStorage;
 use adblock::lists::FilterSet as InnerFilterSet;
 use adblock::url_parser::ResolvesDomain;
 use adblock::Engine as InnerEngine;
 use cxx::{let_cxx_string, CxxString, CxxVector};
 
 use crate::ffi::{
-    resolve_domain_position, BlockerResult, BoxEngineResult, ContentBlockingRulesResult, DebugInfo,
-    FilterListMetadata, RegexManagerDiscardPolicy, VecStringResult,
+    resolve_domain_position, BlockerResult, BoxEngineResult, DebugInfo, FilterListMetadata,
+    RegexManagerDiscardPolicy, VecStringResult,
 };
 use crate::filter_set::FilterSet;
 use crate::result::InternalError;
-
-#[cfg(feature = "ios")]
-use crate::ffi::ContentBlockingRules;
 
 pub struct Engine {
     engine: InnerEngine,
@@ -76,45 +78,6 @@ pub fn read_list_metadata(list: &CxxVector<u8>) -> FilterListMetadata {
     std::str::from_utf8(list.as_slice())
         .map(|list| adblock::lists::read_list_metadata(list).into())
         .unwrap_or_default()
-}
-
-#[cfg(feature = "ios")]
-pub fn convert_rules_to_content_blocking(rules: &CxxString) -> ContentBlockingRulesResult {
-    || -> Result<ContentBlockingRules, InternalError> {
-        use adblock::lists::{ParseOptions, RuleTypes};
-
-        /// This value corresponds to `maxRuleCount` here:
-        /// https://github.com/WebKit/WebKit/blob/4a2df13be2253f64d8da58b794d74347a3742652/Source/WebCore/contentextensions/ContentExtensionParser.cpp#L299
-        const MAX_CB_LIST_SIZE: usize = 150000;
-
-        let mut filter_set = InnerFilterSet::new(true);
-        filter_set.add_filter_list(
-            rules.to_str()?.to_string(),
-            ParseOptions { rule_types: RuleTypes::NetworkOnly, ..Default::default() },
-        );
-
-        // `unwrap` is safe here because `into_content_blocking` only panics if the
-        // `FilterSet` was not created in debug mode
-        let (mut cb_rules, _) = filter_set.into_content_blocking().unwrap();
-        let rules_len = cb_rules.len();
-        let truncated = if rules_len > MAX_CB_LIST_SIZE {
-            // Note that the last rule is always the first-party document exception rule,
-            // which we want to keep. Otherwise, we can arbitrarily truncate rules
-            // before that to ensure that the list can actually compile.
-            cb_rules.swap(rules_len - 1, MAX_CB_LIST_SIZE - 1);
-            cb_rules.truncate(MAX_CB_LIST_SIZE);
-            true
-        } else {
-            false
-        };
-        Ok(ContentBlockingRules { rules_json: serde_json::to_string(&cb_rules)?, truncated })
-    }()
-    .into()
-}
-
-#[cfg(not(feature = "ios"))]
-pub fn convert_rules_to_content_blocking(_rules: &CxxString) -> ContentBlockingRulesResult {
-    panic!("convert_rules_to_content_blocking can only be called on iOS");
 }
 
 fn convert_cxx_string_vector_to_string_collection<C>(
@@ -188,7 +151,7 @@ impl Engine {
         self.engine.deserialize(serialized.as_slice()).is_ok()
     }
 
-    pub fn use_resource_storage(&mut self, storage: &BraveCoreResourceStorage) {
+    pub fn use_resource_storage(&mut self, storage: &ResourceStorage) {
         self.engine.use_resource_storage(storage.clone());
     }
 

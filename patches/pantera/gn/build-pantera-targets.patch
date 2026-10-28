@@ -1,0 +1,16 @@
+# Load Pantera's own code (//pantera, DECISION-13) in Chromium's build.
+#
+# GN only reads build files reachable from the root BUILD.gn, so the pantera
+# targets that nothing in Chrome depends on yet, such as pantera_unittests, are
+# added to gn_all. See devbacklog TASK-31.
+
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -104,6 +104,7 @@
+       "//components/gwp_asan:gwp_asan_unittests",
+       "//infra/orchestrator:orchestrator_all",
+       "//net:net_unittests",
++      "//pantera:pantera_unittests",
+       "//sandbox:sandbox_unittests",
+       "//services:services_unittests",
+       "//services/service_manager/public/cpp",

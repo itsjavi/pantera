@@ -62,7 +62,8 @@ Pantera is a set of patches and files applied to Chromium's source at build time
 1. `build.sh` downloads Chromium's source for the version in `ungoogled-chromium/chromium_version.txt`.
 2. It applies ungoogled-chromium's patches, the macOS patches in `patches/ungoogled-chromium/` and
    Pantera's own patches in `patches/pantera/`, in the order listed in `patches/series`.
-3. It copies `branding/overlay/` over the source (product name, bundle ID, icons) and renames
+3. It copies `branding/overlay/` over the source (product name, bundle ID, icons), adds Pantera's
+   own code as `//pantera` and the Rust crates it needs to `third_party/rust/`, and renames
    Chromium to Pantera in the UI strings and their translations.
 4. It builds with the flags in `ungoogled-chromium/flags.gn` and `flags.macos.gn`, then signs and
    packages a `.dmg` with `sign_and_package_app.sh`.
@@ -72,6 +73,8 @@ Pantera is a set of patches and files applied to Chromium's source at build time
 | `ungoogled-chromium/` | ungoogled-chromium, as a git submodule pinned to a release |
 | `patches/` | macOS patches from upstream and Pantera's own patches |
 | `branding/` | App icon source (`AppIcon.icon`), icon renders, and the overlay copied over Chromium's source |
+| `pantera/` | Pantera's own code, built as `//pantera`: for now the cxx bridge to adblock-rust, ported from brave-core |
+| `third_party/rust/` | adblock-rust and the crates it needs, vendored with Chromium's gnrt ([docs/rust-crates.md](docs/rust-crates.md)) |
 | `scripts/` | Icon and branding generators |
 | `entitlements/`, `flags.macos.gn`, `downloads-*.ini` | macOS build configuration from upstream |
 

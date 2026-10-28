@@ -1,24 +1,54 @@
 /* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/brave_shields/core/common/adblock/rs/src/result.rs).
+ * Pantera's changes: InternalError implements Display and From by hand
+ * instead of with thiserror, which Chromium doesn't offer to first-party
+ * code; iOS result type removed. */
 
 use std::str::Utf8Error;
 
 use adblock::resources::AddResourceError;
-use thiserror::Error;
 
 use crate::engine::Engine;
 use crate::ffi::*;
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub(crate) enum InternalError {
-    #[error("json error: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("utf-8 encoding error: {0}")]
-    Utf8(#[from] Utf8Error),
-    #[error("{0}")]
-    AddResource(#[from] AddResourceError),
+    Json(serde_json::Error),
+    Utf8(Utf8Error),
+    AddResource(AddResourceError),
+}
+
+impl std::fmt::Display for InternalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Json(e) => write!(f, "json error: {e}"),
+            Self::Utf8(e) => write!(f, "utf-8 encoding error: {e}"),
+            Self::AddResource(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl From<serde_json::Error> for InternalError {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Json(e)
+    }
+}
+
+impl From<Utf8Error> for InternalError {
+    fn from(e: Utf8Error) -> Self {
+        Self::Utf8(e)
+    }
+}
+
+impl From<AddResourceError> for InternalError {
+    fn from(e: AddResourceError) -> Self {
+        Self::AddResource(e)
+    }
 }
 
 impl From<&InternalError> for ResultKind {
@@ -82,5 +112,3 @@ where
 impl_result_from_trait!(VecStringResult, Vec<String>);
 impl_result_from_trait!(BoxEngineResult, Box<Engine>);
 impl_result_from_trait!(AddFilterListResult, AddedFiltersRecord);
-#[cfg(feature = "ios")]
-impl_result_from_trait!(ContentBlockingRulesResult, ContentBlockingRules);

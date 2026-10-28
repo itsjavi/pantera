@@ -26,6 +26,7 @@ scriptlets and redirect resources bundled as a separate file (DECISION-14).
       adblock-resources sources and ships beside its GPL-3.0 license in the app bundle
 - [ ] A setting turns list updates off, and the README lists the hosts contacted
 - [ ] No P3A or other telemetry code is ported
+- [ ] Chrome links the engine, and `chrome://credits` lists adblock-rust and its crates
 - [ ] Checked in the build: lists download on first run, the cache is used after a restart, and
       nothing is downloaded with updates off
 

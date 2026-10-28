@@ -2,7 +2,7 @@
 
 .gcs_entries
 
-build/
+/build/
 
 # Agent scratch space
 .local/

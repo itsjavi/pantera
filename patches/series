@@ -45,3 +45,5 @@ pantera/branding/pantera-version.patch
 pantera/branding/webui-product-icon.patch
 pantera/settings/about-page-versions.patch
 pantera/settings/about-page-license.patch
+pantera/gn/build-pantera-targets.patch
+pantera/rust/add-adblock-crates.patch

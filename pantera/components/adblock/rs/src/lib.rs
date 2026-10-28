@@ -1,7 +1,12 @@
 /* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/brave_shields/core/common/adblock/rs/src/lib.rs).
+ * Pantera's changes: include path, ResourceStorage renamed from
+ * BraveCoreResourceStorage, iOS content-blocking conversion removed. */
 
 //! This crate provides a cxx-based FFI for the
 //! [adblock-rust](https://github.com/brave/adblock-rust) library.
@@ -30,17 +35,15 @@ mod ffi {
         ) -> AddFilterListResult;
     }
     extern "Rust" {
-        type BraveCoreResourceStorage;
-        fn new_resource_storage(resources_json: &CxxString) -> Box<BraveCoreResourceStorage>;
-        fn new_empty_resource_storage() -> Box<BraveCoreResourceStorage>;
-        fn clone_resource_storage(
-            storage: &BraveCoreResourceStorage,
-        ) -> Box<BraveCoreResourceStorage>;
+        type ResourceStorage;
+        fn new_resource_storage(resources_json: &CxxString) -> Box<ResourceStorage>;
+        fn new_empty_resource_storage() -> Box<ResourceStorage>;
+        fn clone_resource_storage(storage: &ResourceStorage) -> Box<ResourceStorage>;
         fn extend_resource_storage(
-            storage: &BraveCoreResourceStorage,
+            storage: &ResourceStorage,
             additional_resources_json: &str,
-        ) -> Box<BraveCoreResourceStorage>;
-        fn has_resource_for_testing(storage: &BraveCoreResourceStorage, name: &CxxString) -> bool;
+        ) -> Box<ResourceStorage>;
+        fn has_resource_for_testing(storage: &ResourceStorage, name: &CxxString) -> bool;
     }
     extern "Rust" {
         type Engine;
@@ -89,7 +92,7 @@ mod ffi {
         /// Deserializes and loads a binary-serialized Engine.
         fn deserialize(&mut self, serialized: &CxxVector<u8>) -> bool;
         /// Loads resources from a ResourceStorage instance into the engine.
-        fn use_resource_storage(&mut self, storage: &BraveCoreResourceStorage);
+        fn use_resource_storage(&mut self, storage: &ResourceStorage);
         /// Returns JSON-serialized cosmetic filter resources for a given url.
         fn url_cosmetic_resources(&self, url: &CxxString) -> String;
 
@@ -107,18 +110,10 @@ mod ffi {
         fn discard_regex(&mut self, regex_id: u64);
         /// Sets a discard policy for the regex manager.
         fn set_regex_discard_policy(&mut self, new_discard_policy: &RegexManagerDiscardPolicy);
-
-        /// Converts a list in adblock syntax to its corresponding iOS
-        /// content-blocking syntax. `truncated` will be set to indicate
-        /// whether or not some rules had to be removed to avoid iOS's
-        /// maximum rule count limit.
-        fn convert_rules_to_content_blocking(rules: &CxxString) -> ContentBlockingRulesResult;
     }
 
     unsafe extern "C++" {
-        include!(
-            "brave/components/brave_shields/core/common/adblock/resolver/adblock_domain_resolver.h"
-        );
+        include!("pantera/components/adblock/resolver/adblock_domain_resolver.h");
 
         /// Wrapper function for
         /// net::registry_controlled_domains::GetDomainAndRegistry
@@ -191,12 +186,6 @@ mod ffi {
         metadata: FilterListMetadata,
     }
 
-    #[derive(Default)]
-    struct ContentBlockingRules {
-        rules_json: String,
-        truncated: bool,
-    }
-
     enum ResultKind {
         Success,
         JsonError,
@@ -208,12 +197,6 @@ mod ffi {
     // not yet supported in cxx.
     // Created custom Result structs because cxx auto converts Result<T> to
     // std::exception, and exceptions are not allowed in Chromium.
-
-    struct ContentBlockingRulesResult {
-        value: ContentBlockingRules,
-        result_kind: ResultKind,
-        error_message: String,
-    }
 
     struct VecStringResult {
         value: Vec<String>,

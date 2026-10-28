@@ -1,14 +1,18 @@
 /* Copyright (c) 2022 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/brave_shields/core/common/adblock/resolver/adblock_domain_resolver.cc).
+ * Pantera's changes: include paths and header guard. */
 
-#include "brave/components/brave_shields/core/common/adblock/resolver/adblock_domain_resolver.h"
+#include "pantera/components/adblock/resolver/adblock_domain_resolver.h"
 
 #include <string>
 
-#include "brave/components/brave_shields/core/common/adblock/rs/src/lib.rs.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
+#include "pantera/components/adblock/rs/src/lib.rs.h"
 
 namespace adblock {
 

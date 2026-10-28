@@ -1,0 +1,59 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/rust/rust_static_library.gni")
+
+# Brave's adblock-rust engine (//third_party/rust/adblock) behind the cxx bridge
+# from brave-core. rs/ and resolver/ are ported from brave-core's
+# components/brave_shields/core/common/adblock and keep its MPL-2.0 license.
+# C++ code includes "pantera/components/adblock/rs/src/lib.rs.h".
+group("adblock") {
+  public_deps = [ ":rust_lib" ]
+  deps = [ ":resolver" ]
+}
+
+rust_static_library("rust_lib") {
+  crate_name = "adblock_cxx"
+  crate_root = "rs/src/lib.rs"
+  allow_unsafe = true
+  edition = "2021"
+  sources = [
+    "rs/src/convert.rs",
+    "rs/src/engine.rs",
+    "rs/src/filter_set.rs",
+    "rs/src/lib.rs",
+    "rs/src/resource_storage.rs",
+    "rs/src/result.rs",
+  ]
+  cxx_bindings = [ "rs/src/lib.rs" ]
+  visibility = [ ":*" ]
+  deps = [
+    "//third_party/rust/adblock/v0_13:lib",
+    "//third_party/rust/serde_json/v1:lib",
+  ]
+}
+
+# Answers adblock-rust's public suffix lookups with Chromium's list.
+static_library("resolver") {
+  sources = [
+    "resolver/adblock_domain_resolver.cc",
+    "resolver/adblock_domain_resolver.h",
+  ]
+  visibility = [ ":*" ]
+  deps = [
+    ":rust_lib",
+    "//net",
+  ]
+}
+
+source_set("unit_tests") {
+  testonly = true
+  sources = [ "adblock_rust_unittest.cc" ]
+  deps = [
+    ":adblock",
+    ":resolver",
+    "//testing/gmock",
+    "//testing/gtest",
+  ]
+}

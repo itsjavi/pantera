@@ -46,6 +46,13 @@ for the formats, and use its script rather than reading folders by hand.
 - `patches/series`: patch order. Upstream's macOS patches first, then Pantera's.
 - `patches/ungoogled-chromium/macos/`: upstream's macOS patches. Edit only during an upstream sync.
 - `patches/pantera/`: Pantera's patches to Chromium, by area (`macos/`, `extensions/`).
+- `pantera/`: Pantera's own source code, copied to `build/src/pantera` by `build.sh` and built as
+  `//pantera` (DECISION-13). Patches only hook it into Chromium. Files ported from brave-core keep
+  their MPL-2.0 header and say what changed. Tests go in `pantera_unittests`.
+- `third_party/rust/`: Rust crates Pantera adds to Chromium's, generated with Chromium's gnrt and
+  copied over the source by `build.sh`; `patches/pantera/rust/add-adblock-crates.patch` holds the
+  matching changes to Chromium's own crate files. Regenerate both with
+  `scripts/update-rust-crates.sh` (`docs/rust-crates.md`), never by hand.
 - `domain-substitution-exclusions.list`: files `build.sh` keeps out of ungoogled-chromium's domain
   substitution, each with its reason. Add to it only when a feature needs a real Google domain,
   and check the file has no other Google URLs that matter.
@@ -60,6 +67,7 @@ for the formats, and use its script rather than reading folders by hand.
   rekeys their translations. `recolor-favicons.swift` recolors Chromium's blue page favicons in
   Pantera's amber, into `branding/overlay/`.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
+- `docs/rust-crates.md`: how the Rust crates are vendored and regenerated.
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
 - `VERSION`: Pantera's own version (DECISION-9). `build.sh` passes it to Chromium through the
   BRANDING file; raise it with `make bump-patch`, `bump-minor` or `bump-major`.
@@ -107,6 +115,11 @@ A full Chromium build takes hours and about 100–150 GB of disk, so don't start
 - A Pantera patch without a Chromium checkout: download the files it touches for the pinned
   version into `.local/` (`https://chromium.googlesource.com/chromium/src/+/refs/tags/<version>/<path>?format=TEXT`,
   base64-encoded) and run `patch --dry-run -p1` there.
+- Code in `pantera/` or `third_party/`, without running `build.sh` (which deletes `out/`): copy
+  it into the checkout (`ditto pantera build/src/pantera`, `ditto third_party build/src/third_party`),
+  apply any new patch with `patch -p1 -d build/src`, then build only what changed with
+  `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ninja -C build/src/out/Default <target>`.
+  Pantera's unit tests: build `pantera_unittests` and run `build/src/out/Default/pantera_unittests`.
 - Icon: run `scripts/build-branding.sh`, then look at `branding/icon-light.png` and `branding/icon-dark.png`.
 - String rename: download `tools/grit` (`https://chromium.googlesource.com/chromium/src/+archive/refs/tags/<version>/tools/grit.tar.gz`),
   the two branded `.grd` files, `settings_chromium_strings.grdp` and their `.xtb` translations
