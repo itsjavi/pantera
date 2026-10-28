@@ -49,6 +49,7 @@
 #include "ui/views/controls/button/md_text_button.h"
 #include "ui/views/controls/button/toggle_button.h"
 #include "ui/views/controls/combobox/combobox.h"
+#include "ui/views/controls/combobox/combobox_util.h"
 #include "ui/views/controls/image_view.h"
 #include "ui/views/controls/label.h"
 #include "ui/views/controls/scroll_view.h"
@@ -56,6 +57,7 @@
 #include "ui/views/controls/styled_label.h"
 #include "ui/views/layout/box_layout.h"
 #include "ui/views/layout/box_layout_view.h"
+#include "ui/views/layout/layout_provider.h"
 #include "ui/views/style/typography.h"
 #include "ui/views/view_class_properties.h"
 #include "ui/views/widget/widget.h"
@@ -116,6 +118,15 @@ int GetHorizontalPadding() {
 int GetIconLabelSpacing() {
   return ChromeLayoutProvider::Get()->GetDistanceMetric(
       DISTANCE_RICH_HOVER_BUTTON_ICON_HORIZONTAL);
+}
+
+// How far a combobox's arrow is centered from the combobox's right edge, as
+// Combobox::OnPaint() draws it.
+int GetComboboxArrowCenterInset() {
+  return views::LayoutProvider::Get()->GetDistanceMetric(
+             views::DISTANCE_TEXTFIELD_HORIZONTAL_TEXT_PADDING) +
+         views::kComboboxArrowPaddingWidth +
+         views::ComboboxArrowSize().width() / 2;
 }
 
 std::unique_ptr<views::View> MakeSeparator() {
@@ -330,10 +341,18 @@ void ShieldsBubbleView::BuildAdvancedOptions(views::View* parent) {
           vector_icons::kKeyboardArrowDownIcon, kIconSize));
   advanced_expand_button_->GetViewAccessibility().SetName(
       l10n_util::GetStringUTF16(IDS_PANTERA_SHIELDS_ADVANCED));
-  // The chevron button's own padding counts towards the row's.
-  heading->SetInsideBorderInsets(gfx::Insets::TLBR(
-      8, GetHorizontalPadding(), 8,
-      GetHorizontalPadding() - advanced_expand_button_->GetInsets().right()));
+  // The chevron is centered over the arrows of the comboboxes below. The
+  // button gets a fixed size, since it's only measured once laid out.
+  const int expand_button_size =
+      kIconSize + views::LayoutProvider::Get()
+                      ->GetInsetsMetric(views::INSETS_VECTOR_IMAGE_BUTTON)
+                      .width();
+  advanced_expand_button_->SetPreferredSize(
+      gfx::Size(expand_button_size, expand_button_size));
+  heading->SetInsideBorderInsets(
+      gfx::Insets::TLBR(8, GetHorizontalPadding(), 8,
+                        GetHorizontalPadding() + GetComboboxArrowCenterInset() -
+                            expand_button_size / 2));
 
   advanced_rows_ =
       section->AddChildView(std::make_unique<views::BoxLayoutView>());
