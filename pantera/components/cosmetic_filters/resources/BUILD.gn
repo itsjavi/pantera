@@ -1,0 +1,16 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//tools/grit/grit_rule.gni")
+
+# The cosmetic filters' script, packed into Chrome's resources.pak by
+# patches/pantera/shields/add-cosmetic-filters.patch.
+grit("resources") {
+  source = "cosmetic_filters_resources.grd"
+  outputs = [
+    "grit/cosmetic_filters_resources.h",
+    "cosmetic_filters_resources.pak",
+  ]
+  deps = [ "data:content_cosmetic" ]
+}

@@ -1,0 +1,35 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//tools/typescript/ts_library.gni")
+import("//ui/webui/resources/tools/bundle_js.gni")
+import("//ui/webui/resources/tools/minify_js.gni")
+
+# brave-core's content_cosmetic.ts and procedural_filters.ts (MPL-2.0),
+# compiled and bundled into one script that the renderer runs in Pantera's
+# isolated world.
+ts_library("build_ts") {
+  in_files = [
+    "content_cosmetic.ts",
+    "procedural_filters.ts",
+  ]
+  out_dir = "$target_gen_dir/tsc"
+}
+
+bundle_js("bundle") {
+  host = "about:blank"
+  input = rebase_path("$target_gen_dir/tsc", root_build_dir)
+  js_module_in_files = [ "content_cosmetic.js" ]
+  out_folder = "$target_gen_dir/bundle"
+  excludes = []
+  deps = [ ":build_ts" ]
+}
+
+minify_js("content_cosmetic") {
+  visibility = [ "//pantera/components/cosmetic_filters/resources:*" ]
+  in_folder = "$target_gen_dir/bundle"
+  out_folder = target_gen_dir
+  in_files = [ "content_cosmetic.rollup.js" ]
+  deps = [ ":bundle" ]
+}

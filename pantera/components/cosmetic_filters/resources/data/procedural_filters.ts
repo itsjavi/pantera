@@ -2,6 +2,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/cosmetic_filters/resources/data/procedural_filters.ts),
+// unchanged but for this note.
 
 /**
  *

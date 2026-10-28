@@ -2,12 +2,16 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/cosmetic_filters/common/scriptlet_constants.cc).
+// Pantera's changes: include path and namespace.
 
-#include "brave/components/cosmetic_filters/common/scriptlet_constants.h"
+#include "pantera/components/cosmetic_filters/common/scriptlet_constants.h"
 
 #include "third_party/abseil-cpp/absl/strings/str_format.h"
 
-namespace cosmetic_filters {
+namespace pantera {
 
 namespace {
 
@@ -43,4 +47,4 @@ std::string GetScriptletGlobalsScript(bool is_de_amp_enabled, bool can_debug) {
                          is_de_amp_enabled ? "true" : "false");
 }
 
-}  // namespace cosmetic_filters
+}  // namespace pantera

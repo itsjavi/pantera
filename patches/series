@@ -54,3 +54,4 @@ pantera/shields/block-ad-requests.patch
 pantera/browser/add-pantera-strings.patch
 pantera/shields/add-shields-button.patch
 pantera/shields/hide-cookie-controls-icon.patch
+pantera/shields/add-cosmetic-filters.patch

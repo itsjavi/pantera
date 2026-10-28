@@ -1,0 +1,24 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/tools/bindings/mojom.gni")
+
+# The globals that uBlock Origin's scriptlets expect (ported from brave-core,
+# MPL-2.0).
+source_set("common") {
+  sources = [
+    "scriptlet_constants.cc",
+    "scriptlet_constants.h",
+  ]
+  deps = [ "//third_party/abseil-cpp:absl" ]
+}
+
+# How a frame asks the browser for its cosmetic filters (DECISION-20).
+mojom("mojom") {
+  sources = [ "cosmetic_filters.mojom" ]
+  public_deps = [
+    "//mojo/public/mojom/base",
+    "//url/mojom:url_mojom_gurl",
+  ]
+}

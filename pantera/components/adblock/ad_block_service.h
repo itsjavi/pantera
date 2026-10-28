@@ -25,8 +25,10 @@
 #include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "components/prefs/pref_change_registrar.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "pantera/components/adblock/filter_list_catalog.h"
 #include "pantera/components/adblock/rs/src/lib.rs.h"
+#include "pantera/components/cosmetic_filters/common/cosmetic_filters.mojom.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 
@@ -41,6 +43,7 @@ class SimpleURLLoader;
 namespace pantera {
 
 class AdBlockEngines;
+class AdBlockEngineWrapper;
 
 // Pantera's ad blocker. It keeps Brave's two adblock-rust engines loaded with
 // the lists of Brave's catalog that are on (DECISION-15), and downloads those
@@ -98,6 +101,16 @@ class AdBlockService {
       const std::string& method,
       bool aggressive_blocking,
       base::OnceCallback<void(adblock::BlockerResult)> callback);
+
+  // Makes the browser's half of a frame's cosmetic filtering. `make_impl`
+  // runs on the engines' sequence, which the implementation lives on. The
+  // engines own it, so it never outlives them.
+  using CosmeticFiltersFactory =
+      base::OnceCallback<std::unique_ptr<mojom::CosmeticFiltersResources>(
+          AdBlockEngineWrapper*)>;
+  void BindCosmeticFiltersResources(
+      mojo::PendingReceiver<mojom::CosmeticFiltersResources> receiver,
+      CosmeticFiltersFactory make_impl);
 
   // The catalog's lists that are on.
   std::vector<const FilterListCatalogEntry*> GetEnabledLists() const;

@@ -1,0 +1,32 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Hides ads and runs scriptlets in each frame, from the cosmetic filters the
+# browser sends (ported from brave-core, MPL-2.0).
+source_set("renderer") {
+  sources = [
+    "cosmetic_filters_js_handler.cc",
+    "cosmetic_filters_js_handler.h",
+    "cosmetic_filters_js_render_frame_observer.cc",
+    "cosmetic_filters_js_render_frame_observer.h",
+  ]
+  public_deps = [
+    "//content/public/renderer",
+    "//url",
+  ]
+  deps = [
+    "//base",
+    "//gin",
+    "//mojo/public/cpp/bindings",
+    "//net",
+    "//pantera/components/cosmetic_filters/common",
+    "//pantera/components/cosmetic_filters/common:mojom",
+    "//pantera/components/cosmetic_filters/resources",
+    "//third_party/abseil-cpp:absl",
+    "//third_party/blink/public:blink",
+    "//third_party/blink/public/common",
+    "//ui/base",
+    "//v8",
+  ]
+}

@@ -53,6 +53,12 @@ for the formats, and use its script rather than reading folders by hand.
     and downloads), with no dependency on `//chrome`.
   - `pantera/components/shields/`: per-site shields settings, stored in the PANTERA_SHIELDS and
     PANTERA_FIRST_PARTY_ADS content settings (DECISION-17).
+  - `pantera/components/cosmetic_filters/`: element hiding and scriptlets, ported from brave-core
+    (DECISION-20): the Mojo interface, the browser side that answers on the engines' sequence,
+    the renderer's frame observer, and the TypeScript that runs in Pantera's isolated world,
+    built with Chromium's `ts_library` and `bundle_js`.
+  - `pantera/renderer/`: renderer-process hooks that Chrome's `ChromeContentRendererClient`
+    calls (`patches/pantera/shields/add-cosmetic-filters.patch`).
   - `pantera/browser/`: browser-process code that needs `//chrome/browser`: starting the ad-block
     service and checking web requests against it. `patches/pantera/browser/` and
     `patches/pantera/shields/` hook it in.

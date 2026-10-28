@@ -12,6 +12,7 @@ source_set("shields") {
   deps = [
     "//base",
     "//components/content_settings/core/browser",
+    "//components/content_settings/core/browser:cookie_settings",
     "//components/content_settings/core/common",
     "//net",
   ]

@@ -1,0 +1,36 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Answers frames' requests for cosmetic filters on the ad-block engines'
+# sequence (ported from brave-core, MPL-2.0).
+source_set("browser") {
+  sources = [
+    "cosmetic_filters_resources.cc",
+    "cosmetic_filters_resources.h",
+  ]
+  public_deps = [
+    "//base",
+    "//pantera/components/cosmetic_filters/common:mojom",
+    "//url",
+  ]
+  deps = [
+    "//components/content_settings/core/browser",
+    "//pantera/components/adblock:service",
+    "//pantera/components/shields",
+  ]
+}
+
+source_set("unit_tests") {
+  testonly = true
+  sources = [ "cosmetic_filters_resources_unittest.cc" ]
+  deps = [
+    ":browser",
+    "//base/test:test_support",
+    "//components/content_settings/core/browser",
+    "//components/sync_preferences:test_support",
+    "//pantera/components/adblock:service",
+    "//pantera/components/shields",
+    "//testing/gtest",
+  ]
+}

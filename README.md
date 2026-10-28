@@ -48,7 +48,8 @@ Pantera contacts Google only when you visit the store, install an extension, or 
 Pantera blocks ads and trackers with Brave's [adblock-rust](https://github.com/brave/adblock-rust)
 engine and the filter lists Brave turns on by default. It blocks the requests those lists match,
 as Brave's standard mode does: the main lists leave a site's own content alone, and other sites'
-ads and trackers are blocked. Hiding page elements and running scriptlets are still being built.
+ads and trackers are blocked. It also hides the page elements those lists match, and runs uBlock
+Origin's scriptlets where they ask for them, such as on YouTube, from Brave's code for both.
 
 The shield button right of the address bar counts what was blocked on the page. Its panel turns
 shields off for a site that breaks, makes blocking aggressive on one that doesn't, blocks a site's

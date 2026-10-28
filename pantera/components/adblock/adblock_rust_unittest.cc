@@ -149,6 +149,36 @@ TEST_F(AdblockRustTest, ReturnsCosmeticResources) {
   EXPECT_EQ(ToString(selectors.value[0]), ".sponsored");
 }
 
+// Scriptlets that uBlock Origin marks requiresTrust have permission bit 0 in
+// resources.json (DECISION-14); only lists with that permission inject them.
+TEST_F(AdblockRustTest, TrustedScriptletsNeedAPermittedList) {
+  // "trusted:{{1}}" and "plain:{{1}}" in base64.
+  rust::Box<ResourceStorage> storage = new_resource_storage(
+      R"([{"name": "trusted-set.js", "aliases": [],
+           "kind": {"mime": "application/javascript"},
+           "content": "dHJ1c3RlZDp7ezF9fQ==", "permission": 1},
+          {"name": "set.js", "aliases": [],
+           "kind": {"mime": "application/javascript"},
+           "content": "cGxhaW46e3sxfX0="}])");
+  auto injected = [&](uint8_t permission_mask) {
+    rust::Box<FilterSet> filter_set = new_filter_set(/*debug=*/false);
+    filter_set->add_filter_list_with_permissions(
+        ToBytes("example.com##+js(trusted-set, alpha)\n"
+                "example.com##+js(set, beta)\n"),
+        permission_mask);
+    BoxEngineResult engine = engine_from_filter_set(std::move(filter_set));
+    EXPECT_EQ(engine.result_kind, ResultKind::Success);
+    engine.value->use_resource_storage(*storage);
+    return ToString(
+        engine.value->url_cosmetic_resources("https://example.com/"));
+  };
+
+  const std::string untrusted = injected(0);
+  EXPECT_THAT(untrusted, HasSubstr("plain:beta"));
+  EXPECT_THAT(untrusted, ::testing::Not(HasSubstr("trusted:alpha")));
+  EXPECT_THAT(injected(1), HasSubstr("trusted:alpha"));
+}
+
 TEST_F(AdblockRustTest, ReadsListMetadata) {
   FilterListMetadata metadata = read_list_metadata(
       ToBytes("! Title: Test list\n! Expires: 4 days\n||ads.example.com^\n"));

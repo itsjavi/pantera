@@ -2,6 +2,11 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Ported to Pantera from brave-core (brave/brave-core@2f490708,
+// components/cosmetic_filters/resources/data/content_cosmetic.ts).
+// Pantera's changes: the import has its .js extension, and a few checks for
+// Chromium's stricter TypeScript settings.
 
 // That script is executed from
 // components/cosmetic_filters/content/renderer/cosmetic_filters_js_handler.cc
@@ -12,8 +17,8 @@
 import {
   applyCompiledSelector,
   compileProceduralSelector,
-} from './procedural_filters'
-import type { ProceduralSelector } from './procedural_filters'
+} from './procedural_filters.js'
+import type { ProceduralSelector } from './procedural_filters.js'
 
 type StyleAction = {
   type: 'style'
@@ -593,7 +598,7 @@ const unhideSelectors = (selectors: Set<string>) => {
   const ruleLookup = Array.from(CC.allSelectorsToRules.entries())
   let countAtLastHighest = rulesToRemove.length
   for (let i = lastIdx; i > 0; i--) {
-    const [selector, oldIdx] = ruleLookup[i]
+    const [selector, oldIdx] = ruleLookup[i]!
     // Is this one we removed?
     if (rulesToRemove.includes(i)) {
       CC.allSelectorsToRules.delete(selector)
@@ -640,7 +645,7 @@ const pumpCosmeticFilterQueues = () => {
   for (let queueIndex = 0; queueIndex < CC.numQueues; queueIndex += 1) {
     const currentQueue = CC.allQueues[queueIndex]
     const nextQueue = CC.allQueues[queueIndex + 1]
-    if (currentQueue.size === 0) {
+    if (currentQueue === undefined || currentQueue.size === 0) {
       continue
     }
 
@@ -862,8 +867,9 @@ const executeProceduralActions = (added?: Element[]) => {
       let matchingElements: Element[] | NodeListOf<any>
       let startOperator: number
 
-      if (selector[0].type === 'css-selector' && added === undefined) {
-        matchingElements = document.querySelectorAll(selector[0].arg)
+      const firstOperator = selector[0]!
+      if (firstOperator.type === 'css-selector' && added === undefined) {
+        matchingElements = document.querySelectorAll(firstOperator.arg)
         startOperator = 1
       } else if (added === undefined) {
         matchingElements = document.querySelectorAll('*')
@@ -891,8 +897,8 @@ const executeProceduralActions = (added?: Element[]) => {
           + JSON.stringify(action)
           + ': ',
       )
-      console.error(e.message)
-      console.error(e.stack)
+      console.error((e as Error).message)
+      console.error((e as Error).stack)
     }
   }
 }

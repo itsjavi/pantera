@@ -1,35 +1,41 @@
 /* Copyright (c) 2021 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/cosmetic_filters/browser/cosmetic_filters_resources.h).
+ * Pantera's changes: it checks the site's shields settings and decides
+ * whether to hide first-party content (DECISION-20), and procedural
+ * filtering is always on. */
 
-#ifndef BRAVE_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_
-#define BRAVE_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_
+#ifndef PANTERA_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_
+#define PANTERA_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_
 
 #include <string>
 #include <vector>
 
 #include "base/memory/raw_ptr.h"
-#include "brave/components/cosmetic_filters/common/cosmetic_filters.mojom.h"
+#include "base/memory/scoped_refptr.h"
+#include "pantera/components/cosmetic_filters/common/cosmetic_filters.mojom.h"
+#include "url/gurl.h"
 
 class HostContentSettingsMap;
 
-namespace brave_shields {
-class AdBlockEngineWrapper;
-}
+namespace pantera {
 
-namespace cosmetic_filters {
+class AdBlockEngineWrapper;
 
 // CosmeticFiltersResources is a class that is responsible for interaction
 // between CosmeticFiltersJSHandler class that lives inside renderer process.
-
-class CosmeticFiltersResources final
-    : public cosmetic_filters::mojom::CosmeticFiltersResources {
+// It lives on `engine_wrapper`'s sequence, and reads the shields settings
+// from `settings_map` there.
+class CosmeticFiltersResources final : public mojom::CosmeticFiltersResources {
  public:
   CosmeticFiltersResources(const CosmeticFiltersResources&) = delete;
   CosmeticFiltersResources& operator=(const CosmeticFiltersResources&) = delete;
-  explicit CosmeticFiltersResources(
-      brave_shields::AdBlockEngineWrapper* engine_wrapper);
+  CosmeticFiltersResources(AdBlockEngineWrapper* engine_wrapper,
+                           scoped_refptr<HostContentSettingsMap> settings_map);
   ~CosmeticFiltersResources() override;
 
   // Sends back to renderer a response about rules that has to be applied
@@ -40,20 +46,18 @@ class CosmeticFiltersResources final
 
   // Sends the renderer a response including whether or not to apply cosmetic
   // filtering to first party elements along with an initial set of rules and
-  // scripts to apply for the given URL.
-  void UrlCosmeticResources(const std::string& url,
-                            bool aggressive_blocking,
+  // scripts to apply for the given URL, or nothing when shields are down.
+  void UrlCosmeticResources(const GURL& url,
+                            const GURL& top_frame_url,
+                            bool cross_origin_to_top_frame,
                             UrlCosmeticResourcesCallback callback) override;
 
  private:
-  // DanglingPtrDetection is disabled because the AdBlockService is owned by
-  // the BrowserProcess and is guaranteed to be alive for the lifetime of the
-  // browser process. This class however is a self-owned mojo receiver.
-  const raw_ptr<brave_shields::AdBlockEngineWrapper,
-                DisableDanglingPtrDetection>
-      engine_wrapper_ = nullptr;
+  // The ad-block service owns this and the engines, and destroys this first.
+  const raw_ptr<AdBlockEngineWrapper> engine_wrapper_;
+  const scoped_refptr<HostContentSettingsMap> settings_map_;
 };
 
-}  // namespace cosmetic_filters
+}  // namespace pantera
 
-#endif  // BRAVE_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_
+#endif  // PANTERA_COMPONENTS_COSMETIC_FILTERS_BROWSER_COSMETIC_FILTERS_RESOURCES_H_

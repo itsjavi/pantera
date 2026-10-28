@@ -3,9 +3,9 @@
 # found in the LICENSE file.
 
 # Pantera's browser-process code. Chrome's //chrome/browser:core adds
-# PanteraBrowserMainExtraParts and the ad blocker's URL loader factory proxy,
-# and //chrome/browser/prefs registers Pantera's prefs (patches in
-# patches/pantera/browser/).
+# PanteraBrowserMainExtraParts, the ad blocker's URL loader factory proxy and
+# Pantera's frame interfaces, and //chrome/browser/prefs registers Pantera's
+# prefs (patches in patches/pantera/browser/ and patches/pantera/shields/).
 source_set("browser") {
   sources = [
     "adblock/ad_block_proxying_url_loader_factory.cc",
@@ -14,6 +14,8 @@ source_set("browser") {
     "adblock/ad_block_request_type.h",
     "adblock/ad_block_tab_helper.cc",
     "adblock/ad_block_tab_helper.h",
+    "pantera_browser_interface_binders.cc",
+    "pantera_browser_interface_binders.h",
     "pantera_browser_main_extra_parts.cc",
     "pantera_browser_main_extra_parts.h",
     "pantera_prefs.cc",
@@ -22,6 +24,7 @@ source_set("browser") {
   public_deps = [
     "//chrome/browser:main_extra_parts",
     "//content/public/browser",
+    "//mojo/public/cpp/bindings",
     "//services/network/public/cpp",
     "//services/network/public/mojom",
     "//third_party/blink/public/mojom:mojom_platform_shared",
@@ -41,6 +44,8 @@ source_set("browser") {
     "//pantera/components/adblock",
     "//pantera/components/adblock:service",
     "//pantera/components/adblock:stub_response",
+    "//pantera/components/cosmetic_filters/browser",
+    "//pantera/components/cosmetic_filters/common:mojom",
     "//pantera/components/shields",
   ]
 }

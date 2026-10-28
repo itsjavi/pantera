@@ -1,0 +1,116 @@
+# Run Pantera's cosmetic filters in every frame.
+#
+# Pantera's cosmetic filtering lives in //pantera (DECISION-13, DECISION-20,
+# devbacklog TASK-33). This hooks it into Chrome: an isolated world for its
+# scripts, the renderer's frame observer and document-start call (before
+# extensions, as brave-core does), the browser's binder for the frames'
+# requests, and the script's resources in resources.pak, with a grit range
+# after Pantera's strings.
+
+--- a/chrome/common/chrome_isolated_world_ids.h
++++ b/chrome/common/chrome_isolated_world_ids.h
+@@ -24,6 +24,9 @@
+   ISOLATED_WORLD_ID_APPLESCRIPT,
+ #endif  // BUILDFLAG(IS_MAC)
+ 
++  // Isolated world ID for Pantera's cosmetic filters.
++  ISOLATED_WORLD_ID_PANTERA_COSMETIC_FILTERS,
++
+   // Numbers for isolated worlds for extensions are set in
+   // extensions/renderer/script_injection.cc, and are are greater than or equal
+   // to this number.
+--- a/chrome/renderer/chrome_content_renderer_client.cc
++++ b/chrome/renderer/chrome_content_renderer_client.cc
+@@ -150,6 +150,7 @@
+ #include "mojo/public/cpp/bindings/generic_pending_receiver.h"
+ #include "mojo/public/cpp/bindings/remote.h"
+ #include "net/base/net_errors.h"
++#include "pantera/renderer/pantera_render_frame_hooks.h"
+ #include "pdf/buildflags.h"
+ #include "printing/buildflags/buildflags.h"
+ #include "services/network/public/cpp/is_potentially_trustworthy.h"
+@@ -852,6 +853,9 @@
+   // Wire up the PageStabilityMonitorManager to allow components to
+   // request stability monitors for this frame.
+   new page_content_annotations::PageStabilityMonitorManager(render_frame);
++
++  // Pantera's cosmetic filters.
++  pantera::RenderFrameCreated(render_frame);
+ }
+ 
+ void ChromeContentRendererClient::WebViewCreated(
+@@ -1486,6 +1490,9 @@
+ 
+ void ChromeContentRendererClient::RunScriptsAtDocumentStart(
+     content::RenderFrame* render_frame) {
++  // Pantera's cosmetic filters run before extensions.
++  pantera::RunScriptsAtDocumentStart(render_frame);
++
+ #if BUILDFLAG(ENABLE_EXTENSIONS_CORE)
+   extensions::ExtensionsRendererClient::Get()->RunScriptsAtDocumentStart(
+       render_frame);
+--- a/chrome/renderer/BUILD.gn
++++ b/chrome/renderer/BUILD.gn
+@@ -137,6 +137,7 @@
+     "//chrome/common/request_header_integrity:buildflags",
+     "//chrome/common/search:mojo_bindings",
+     "//chrome/renderer/actor",
++    "//pantera/renderer",
+     "//chrome/services/speech/buildflags",
+     "//components/actor/core:features",
+     "//components/actor/core:task_id",
+--- a/chrome/browser/chrome_browser_interface_binders.cc
++++ b/chrome/browser/chrome_browser_interface_binders.cc
+@@ -67,6 +67,7 @@
+ #include "mojo/public/cpp/bindings/binder_map.h"
+ #include "mojo/public/cpp/bindings/pending_receiver.h"
+ #include "mojo/public/cpp/bindings/self_owned_receiver.h"
++#include "pantera/browser/pantera_browser_interface_binders.h"
+ #include "pdf/buildflags.h"
+ #include "services/image_annotation/public/mojom/image_annotation.mojom.h"
+ #include "third_party/blink/public/common/features.h"
+@@ -429,6 +430,9 @@
+ void PopulateChromeFrameBinders(
+     mojo::BinderMapWithContext<content::RenderFrameHost*>* map,
+     content::RenderFrameHost* render_frame_host) {
++  // Pantera's frame interfaces, such as its cosmetic filters.
++  pantera::PopulateFrameBinders(map, render_frame_host);
++
+   map->Add<glic::mojom::WebClientHandler>(&glic::BindGlicWebClientHandler);
+   // Defense in depth: privileged capability interfaces are not even registered
+   // for a frame outside a privileged process, so a non-PWC frame cannot
+--- a/chrome/chrome_paks.gni
++++ b/chrome/chrome_paks.gni
+@@ -151,6 +151,9 @@
+       "$root_gen_dir/third_party/blink/public/strings/permission_element_generated_strings.pak",
+       "$root_gen_dir/ui/resources/ui_lottie_resources.pak",
+       "$root_gen_dir/ui/webui/resources/webui_resources.pak",
++
++      # Pantera's cosmetic filters script (TASK-33).
++      "$root_gen_dir/pantera/components/cosmetic_filters/resources/cosmetic_filters_resources.pak",
+     ]
+ 
+     if (enable_webui_ntp) {
+@@ -177,6 +180,7 @@
+       "//chrome/browser/resources",
+       "//chrome/common:resources",
+       "//components/resources",
++      "//pantera/components/cosmetic_filters/resources",
+       "//content:content_resources",
+       "//content/browser/resources",
+       "//mojo/public/js:resources",
+--- a/tools/gritsettings/resource_ids.spec
++++ b/tools/gritsettings/resource_ids.spec
+@@ -1808,6 +1808,12 @@
+   "pantera/app/pantera_strings.grd": {
+     "META": {"sizes": {"messages": [200]}},
+     "messages": [12800],
++  },
++
++  # Pantera's cosmetic filters script (devbacklog TASK-33).
++  "pantera/components/cosmetic_filters/resources/cosmetic_filters_resources.grd": {
++    "META": {"sizes": {"includes": [10]}},
++    "includes": [13000],
+   },
+ 
+   # END "everything else" section.

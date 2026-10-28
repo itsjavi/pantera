@@ -28,6 +28,7 @@
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "crypto/hash.h"
+#include "mojo/public/cpp/bindings/unique_receiver_set.h"
 #include "net/base/load_flags.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "pantera/components/adblock/ad_block_engine_wrapper.h"
@@ -153,8 +154,7 @@ class AdBlockEngines {
       resources_ = adblock::new_resource_storage(resources_json);
       wrapper_->UseResources(*resources_);
     } else {
-      LOG(ERROR) << "Ad block: no resources.json in "
-                 << resources_dir_.value();
+      LOG(ERROR) << "Ad block: no resources.json in " << resources_dir_.value();
     }
 
     std::string saved_key;
@@ -255,6 +255,13 @@ class AdBlockEngines {
     return loaded;
   }
 
+  void BindCosmeticFiltersResources(
+      mojo::PendingReceiver<mojom::CosmeticFiltersResources> receiver,
+      AdBlockService::CosmeticFiltersFactory make_impl) {
+    cosmetic_filters_receivers_.Add(std::move(make_impl).Run(wrapper_.get()),
+                                    std::move(receiver));
+  }
+
   adblock::BlockerResult ShouldStartRequest(const GURL& url,
                                             const std::string& request_type,
                                             const url::Origin& initiator,
@@ -284,6 +291,9 @@ class AdBlockEngines {
   rust::Box<adblock::ResourceStorage> resources_;
   // The key of the list files the engines hold now.
   std::string loaded_key_;
+  // Frames' cosmetic filtering, destroyed before the engines it reads.
+  mojo::UniqueReceiverSet<mojom::CosmeticFiltersResources>
+      cosmetic_filters_receivers_;
 };
 
 AdBlockService::AdBlockService(
@@ -338,6 +348,14 @@ void AdBlockService::ShouldStartRequest(
       .WithArgs(url, request_type, request_initiator, method,
                 aggressive_blocking)
       .Then(std::move(callback));
+}
+
+void AdBlockService::BindCosmeticFiltersResources(
+    mojo::PendingReceiver<mojom::CosmeticFiltersResources> receiver,
+    CosmeticFiltersFactory make_impl) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  engines_.AsyncCall(&AdBlockEngines::BindCosmeticFiltersResources)
+      .WithArgs(std::move(receiver), std::move(make_impl));
 }
 
 std::vector<const FilterListCatalogEntry*> AdBlockService::GetEnabledLists()

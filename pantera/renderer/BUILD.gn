@@ -1,0 +1,17 @@
+# Copyright 2026 The Pantera Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Pantera's renderer-process code. Chrome's ChromeContentRendererClient calls
+# it (patches/pantera/shields/add-cosmetic-filters.patch).
+source_set("renderer") {
+  sources = [
+    "pantera_render_frame_hooks.cc",
+    "pantera_render_frame_hooks.h",
+  ]
+  deps = [
+    "//chrome/common",
+    "//content/public/renderer",
+    "//pantera/components/cosmetic_filters/renderer",
+  ]
+}

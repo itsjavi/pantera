@@ -1,51 +1,30 @@
 /* Copyright (c) 2021 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at https://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Ported to Pantera from brave-core (brave/brave-core@2f490708,
+ * components/cosmetic_filters/common/cosmetic_filters.mojom).
+ * Pantera's changes: the browser decides whether and how a frame is
+ * filtered (DECISION-20), and the element picker's interfaces are gone. */
 
-module cosmetic_filters.mojom;
+module pantera.mojom;
 
 import "mojo/public/mojom/base/values.mojom";
-
-struct ElementPickerLocalization {
-  string create_enabled_text;
-  string create_disabled_text;
-  string manage_text;
-  string show_rules_text;
-  string hide_rules_text;
-  string quit_text;
-};
+import "url/mojom/url.mojom";
 
 interface CosmeticFiltersResources {
   // Receives an input string which is JSON object.
   HiddenClassIdSelectors(string input, array<string> exceptions) => (
       mojo_base.mojom.DictionaryValue result);
 
+  // The cosmetic resources for a frame at `url` whose top-level frame is at
+  // `top_frame_url`, or null when shields are down for the top-level site.
+  // The resources' "hide_first_party" says whether to hide the frame's
+  // first-party content too.
   [Sync]
-  UrlCosmeticResources(string url, bool aggressive_blocking) => (
-      mojo_base.mojom.Value result);
-};
-
-interface CosmeticFiltersHandler {
-  // Adds a user cosmetic rule for the current site.
-  // (currently from the content picker feature).
-  AddSiteCosmeticFilter(string filter);
-
-  // Opens the custom filter section in Shields settings .
-  ManageCustomFilters();
-
-  GetElementPickerThemeInfo() => (
-      bool is_dark_mode_enabled, int32 background_color);
-
-  GetElementPickerLocalizedTexts() => (
-    ElementPickerLocalization localization_data
-  );
-};
-
-// An interface to render frame agent `CosmeticFiltersJSHandler` to control
-// cosmetic filter features.
-interface CosmeticFiltersAgent {
-  // Inject the content picker script to allow a user to select unwanted
-  // DOM elements.
-  LaunchContentPicker();
+  UrlCosmeticResources(url.mojom.Url url,
+                       url.mojom.Url top_frame_url,
+                       bool cross_origin_to_top_frame) => (
+      mojo_base.mojom.DictionaryValue? result);
 };

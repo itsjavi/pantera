@@ -9,6 +9,7 @@ test("pantera_unittests") {
   deps = [
     "//mojo/core/test:run_all_unittests",
     "//pantera/components/adblock:unit_tests",
+    "//pantera/components/cosmetic_filters/browser:unit_tests",
     "//pantera/components/shields:unit_tests",
   ]
 }
