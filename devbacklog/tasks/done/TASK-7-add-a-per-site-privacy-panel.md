@@ -5,6 +5,7 @@ priority: high
 labels: [phase-1, shields, ui]
 depends_on: [TASK-8]
 created: 2026-10-27
+completed: 2026-10-28
 ---
 
 ## Goal
@@ -22,7 +23,7 @@ harder on one that doesn't, and see what was blocked.
 - [x] Brave's other rows are shown disabled until their tasks, and Chromium's cookie controls
       icon is hidden
 - [x] An expandable list shows the requests blocked on the page
-- [ ] Changing a setting reloads the page
+- [x] Changing a setting reloads the page
 - [x] The strings are translatable resources
 - [x] Checked in the build, with screenshots in light and dark mode
 
@@ -43,7 +44,5 @@ settings, the blocked list, and no cookie controls icon in the address bar. The 
 toolbar's own icon colors and the count badge Pantera's accent; the rows' icons line up with page
 info's metrics. The site settings behind the controls are covered by `pantera_unittests`.
 
-Not checked yet: clicking the panel's controls in the build (switch, ads and cookies choices,
-scripts toggle) and seeing the page reload with the new setting. The screenshots come from a
-developer switch, and the agent doesn't drive the mouse on the user's screen. Try it in the built
-app, then tick "Changing a setting reloads the page" and move the task to done.
+2026-10-28, the user clicked through the panel's controls in the build: the page reloads with
+the new setting.
