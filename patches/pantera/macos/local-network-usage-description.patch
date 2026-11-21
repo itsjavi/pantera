@@ -1,0 +1,29 @@
+# Name Pantera in the local network permission text.
+#
+# ungoogled-chromium-macos's add-local-network-usage-description.patch puts
+# "Chromium uses your local network..." in the app's and the helpers'
+# Info.plist. macOS shows it when it asks whether the browser may reach
+# devices on the local network.
+
+--- a/chrome/app/app-Info.plist
++++ b/chrome/app/app-Info.plist
+@@ -220,7 +220,7 @@
+ 	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
+ 	<false/>
+ 	<key>NSLocalNetworkUsageDescription</key>
+-	<string>Chromium uses your local network to access websites and devices on your network.</string>
++	<string>Pantera uses your local network to access websites and devices on your network.</string>
+ 	<key>NSPrincipalClass</key>
+ 	<string>BrowserCrApplication</string>
+ 	<key>NSSupportsAutomaticGraphicsSwitching</key>
+--- a/chrome/app/helper-Info.plist
++++ b/chrome/app/helper-Info.plist
+@@ -32,7 +32,7 @@
+ 	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
+ 	<false/>
+ 	<key>NSLocalNetworkUsageDescription</key>
+-	<string>Chromium uses your local network to access websites and devices on your network.</string>
++	<string>Pantera uses your local network to access websites and devices on your network.</string>
+ 	<key>NSSupportsAutomaticGraphicsSwitching</key>
+ 	<true/>
+ 	<key>NSCameraUseContinuityCameraDeviceType</key>
