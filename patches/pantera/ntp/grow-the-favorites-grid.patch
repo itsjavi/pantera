@@ -18,12 +18,12 @@
  // If custom links are enabled, an additional tile may be returned making up to
 --- a/ui/webui/resources/cr_components/most_visited/most_visited.ts
 +++ b/ui/webui/resources/cr_components/most_visited/most_visited.ts
-@@ -799,7 +799,7 @@ export class MostVisitedElement extends MostVisitedElementBase {
+@@ -804,7 +804,7 @@ export class MostVisitedElement extends MostVisitedElementBase {
              getComputedStyle(this).getPropertyValue('--most-visited-tile-size'),
              10) ||
          112;
 -    const maxColumnCount = this.singleRow ? 10 : 5;
 +    const maxColumnCount = this.singleRow ? 10 : 8;
-     for (let i = maxColumnCount; i >= 4; i--) {
-       const query = `(min-width: ${tileSize * (i + 1)}px)`;
-       const queryList = this.windowProxy_.matchMedia(query);
+     if (this.containerWidth !== null) {
+       // Same breakpoints as the media queries below: N columns need a width of
+       // at least N + 1 tiles.
