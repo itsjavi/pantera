@@ -1,14 +1,14 @@
 # Add Brave's adblock-rust crate to Chromium's Rust dependencies.
 #
-# Chromium's crate manifest gains adblock 0.13.3 with brave-core's features
+# Chromium's crate manifest gains adblock 0.13.5 with brave-core's features
 # (TASK-31, DECISION-13). The rest is what Chromium's gnrt tool generated from
 # that: the lockfile, per-crate config for the new crates, and BUILD.gn changes
 # for crates Chromium already has. regex and siphasher stop being test-only,
 # aho-corasick, which Chromium only used in tests, is allowed its unsafe code,
-# bitflags gains its serde feature, serde and serde_core their rc feature and
-# stable_deref_trait its std feature. The new crates themselves (sources,
-# BUILD.gn and README.chromium files, and gnrt patches adding three missing
-# license files) are copied from third_party/ by build.sh.
+# bitflags gains its serde feature and stable_deref_trait its std feature. The
+# new crates themselves (sources, BUILD.gn and README.chromium files, and gnrt
+# patches adding three missing license files) are copied from third_party/ by
+# build.sh.
 #
 # Regenerate it with scripts/update-rust-crates.sh (docs/rust-crates.md).
 
@@ -43,13 +43,13 @@ diff --git a/third_party/rust/bitflags/v2/BUILD.gn b/third_party/rust/bitflags/v
 diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/chromium_crates_io/Cargo.lock
 --- a/third_party/rust/chromium_crates_io/Cargo.lock
 +++ b/third_party/rust/chromium_crates_io/Cargo.lock
-@@ -2,6 +2,31 @@
+@@ -2,6 +2,30 @@
  # It is not intended for manual editing.
  version = 4
  
 +[[package]]
 +name = "adblock"
-+version = "0.13.3"
++version = "0.13.5"
 +source = "registry+https://github.com/rust-lang/crates.io-index"
 +dependencies = [
 + "arrayvec",
@@ -69,13 +69,12 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 + "serde",
 + "serde_json",
 + "thiserror 1.0.69",
-+ "url",
 +]
 +
  [[package]]
  name = "addr2line"
  version = "0.25.1"
-@@ -83,6 +108,11 @@ name = "array-init"
+@@ -78,6 +102,11 @@ name = "array-init"
  version = "2.1.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  
@@ -87,7 +86,7 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "autocfg"
  version = "1.5.1"
-@@ -158,6 +188,9 @@ dependencies = [
+@@ -152,6 +181,9 @@ dependencies = [
  name = "bitflags"
  version = "2.13.2"
  source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -96,8 +95,8 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +]
  
  [[package]]
- name = "bumpalo"
-@@ -230,6 +263,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ name = "build_id2"
+@@ -234,6 +266,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  name = "chromium"
  version = "0.1.0"
  dependencies = [
@@ -105,16 +104,16 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
   "antlr4rust",
   "anyhow",
   "base64",
-@@ -339,7 +373,7 @@ name = "cobs"
+@@ -343,7 +376,7 @@ name = "cobs"
  version = "0.3.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  dependencies = [
 - "thiserror",
-+ "thiserror 2.0.20",
++ "thiserror 2.0.21",
  ]
  
  [[package]]
-@@ -400,6 +434,27 @@ dependencies = [
+@@ -416,6 +449,27 @@ dependencies = [
   "cfg-if",
  ]
  
@@ -141,9 +140,9 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +
  [[package]]
  name = "ctor"
- version = "0.6.3"
-@@ -471,6 +526,25 @@ dependencies = [
-  "syn 3.0.5",
+ version = "1.0.13"
+@@ -482,6 +536,25 @@ dependencies = [
+  "syn 3.0.6",
  ]
  
 +[[package]]
@@ -167,9 +166,9 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +
  [[package]]
  name = "derivre"
- version = "0.3.12"
-@@ -547,6 +621,19 @@ dependencies = [
-  "syn 3.0.5",
+ version = "0.3.13"
+@@ -558,6 +631,19 @@ dependencies = [
+  "syn 3.0.6",
  ]
  
 +[[package]]
@@ -186,9 +185,18 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +]
 +
  [[package]]
- name = "dtor"
- version = "0.1.1"
-@@ -633,6 +720,15 @@ dependencies = [
+ name = "either"
+ version = "1.18.0"
+@@ -613,7 +699,7 @@ name = "fast_rands"
+ version = "0.16.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ dependencies = [
+- "rand_core",
++ "rand_core 0.10.1",
+  "rustversion",
+  "serde",
+ ]
+@@ -658,6 +744,15 @@ dependencies = [
   "writeable",
  ]
  
@@ -204,22 +212,7 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "flate2"
  version = "1.1.10"
-@@ -656,6 +752,14 @@ dependencies = [
-  "bytemuck",
- ]
- 
-+[[package]]
-+name = "form_urlencoded"
-+version = "1.2.2"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+dependencies = [
-+ "percent-encoding",
-+]
-+
- [[package]]
- name = "fs2"
- version = "0.4.3"
-@@ -1167,6 +1271,25 @@ name = "icu_time_data"
+@@ -1177,6 +1272,25 @@ name = "icu_time_data"
  version = "2.2.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  
@@ -245,25 +238,16 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "image"
  version = "0.25.10"
-@@ -1246,7 +1369,7 @@ dependencies = [
+@@ -1256,7 +1370,7 @@ dependencies = [
   "jxl_transforms",
   "num-derive",
   "num-traits",
 - "thiserror",
-+ "thiserror 2.0.20",
++ "thiserror 2.0.21",
  ]
  
  [[package]]
-@@ -1347,7 +1470,7 @@ dependencies = [
-  "num_enum",
-  "once_cell",
-  "postcard",
-- "rand_core",
-+ "rand_core 0.9.5",
-  "rustversion",
-  "serde",
-  "serial_test",
-@@ -1503,6 +1626,11 @@ dependencies = [
+@@ -1576,6 +1690,11 @@ dependencies = [
   "byteorder",
  ]
  
@@ -274,8 +258,8 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +
  [[package]]
  name = "nix"
- version = "0.30.1"
-@@ -1629,6 +1757,58 @@ dependencies = [
+ version = "0.31.3"
+@@ -1725,6 +1844,58 @@ dependencies = [
   "windows-link",
  ]
  
@@ -334,7 +318,7 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "pin-project-lite"
  version = "0.2.17"
-@@ -1667,6 +1847,11 @@ dependencies = [
+@@ -1768,6 +1939,11 @@ dependencies = [
   "zerovec",
  ]
  
@@ -346,7 +330,7 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "primal-check"
  version = "0.3.4"
-@@ -1732,6 +1917,19 @@ name = "r-efi"
+@@ -1828,6 +2004,19 @@ name = "r-efi"
  version = "6.0.0"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  
@@ -365,8 +349,8 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +
  [[package]]
  name = "rand_core"
- version = "0.9.5"
-@@ -1826,6 +2024,19 @@ dependencies = [
+ version = "0.10.1"
+@@ -1923,6 +2112,19 @@ dependencies = [
   "rustc-demangle",
  ]
  
@@ -386,7 +370,7 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "rustfft"
  version = "6.4.1"
-@@ -1867,6 +2078,34 @@ name = "scratch"
+@@ -1964,6 +2166,34 @@ name = "scratch"
  version = "1.0.9"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  
@@ -421,8 +405,8 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "serde"
  version = "1.0.229"
-@@ -1939,6 +2178,14 @@ dependencies = [
-  "syn 2.0.119",
+@@ -2051,6 +2281,14 @@ dependencies = [
+  "syn 3.0.6",
  ]
  
 +[[package]]
@@ -436,16 +420,16 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  [[package]]
  name = "sfv"
  version = "0.15.0"
-@@ -1979,7 +2226,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -2111,7 +2349,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  dependencies = [
-  "hashbrown 0.17.1",
+  "hashbrown",
   "skrifa",
 - "thiserror",
-+ "thiserror 2.0.20",
++ "thiserror 2.0.21",
   "write-fonts",
  ]
  
-@@ -2267,12 +2514,30 @@ dependencies = [
+@@ -2399,12 +2637,30 @@ dependencies = [
   "winapi-util",
  ]
  
@@ -459,11 +443,11 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
 +
  [[package]]
  name = "thiserror"
- version = "2.0.20"
+ version = "2.0.21"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  dependencies = [
 - "thiserror-impl",
-+ "thiserror-impl 2.0.20",
++ "thiserror-impl 2.0.21",
 +]
 +
 +[[package]]
@@ -477,24 +461,6 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.lock b/third_party/rust/c
  ]
  
  [[package]]
-@@ -2403,6 +2668,17 @@ name = "unty"
- version = "0.0.4"
- source = "registry+https://github.com/rust-lang/crates.io-index"
- 
-+[[package]]
-+name = "url"
-+version = "2.5.8"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+dependencies = [
-+ "form_urlencoded",
-+ "idna",
-+ "percent-encoding",
-+ "serde",
-+]
-+
- [[package]]
- name = "utf16_iter"
- version = "1.0.5"
 diff --git a/third_party/rust/chromium_crates_io/Cargo.toml b/third_party/rust/chromium_crates_io/Cargo.toml
 --- a/third_party/rust/chromium_crates_io/Cargo.toml
 +++ b/third_party/rust/chromium_crates_io/Cargo.toml
@@ -504,14 +470,14 @@ diff --git a/third_party/rust/chromium_crates_io/Cargo.toml b/third_party/rust/c
  [dependencies]
 +# Pantera: Brave's ad-block engine, for //pantera/components/adblock. Features
 +# as in brave-core, without the bundled public suffix list (Chromium's is used).
-+adblock = { version = "0.13.3", default-features = false, features = ["css-validation", "debug-info", "full-regex-handling", "single-thread"] }
++adblock = { version = "0.13.5", default-features = false, features = ["css-validation", "debug-info", "full-regex-handling", "single-thread"] }
  antlr4rust = "0.5.2"
  anyhow = "1.0.98"
  base64 = "0.22"
 diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/rust/chromium_crates_io/gnrt_config.toml
 --- a/third_party/rust/chromium_crates_io/gnrt_config.toml
 +++ b/third_party/rust/chromium_crates_io/gnrt_config.toml
-@@ -113,6 +113,9 @@ removed_librs_template = "removed_lib.rs.hbs"
+@@ -114,6 +114,9 @@ removed_librs_template = "removed_lib.rs.hbs"
  remove_crates = []
  root = "chromium"
  
@@ -521,7 +487,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.addr2line]
  allow_first_party_usage = false
  extra_kv = { allow_unsafe = true }
-@@ -128,7 +131,8 @@ extra_kv = { allow_unsafe = true }
+@@ -129,7 +132,8 @@ extra_kv = { allow_unsafe = true }
  [crate.aho-corasick]
  group = 'safe'
  allow_first_party_usage = false
@@ -531,7 +497,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  
  [crate.android_system_properties]
  extra_kv = { allow_unsafe = true }
-@@ -157,6 +161,9 @@ multiversion_cleanup_bug = "https://crbug.com/493648954"
+@@ -153,6 +157,9 @@ allow_unsafe = true
  [crate.array-init]
  extra_kv = { allow_unsafe = true }
  
@@ -541,7 +507,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.autocfg.extra_kv]
  allow_unsafe = false
  
-@@ -265,6 +272,12 @@ allow_unsafe = false
+@@ -271,6 +278,12 @@ allow_unsafe = false
  [crate.crc32fast.extra_kv]
  allow_unsafe = true
  
@@ -552,9 +518,9 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
 +extra_kv = { allow_unsafe = false }
 +
  [crate.ctor]
+ extra_input_roots = ["../docs"]
  extra_kv = { allow_unsafe = false }
- 
-@@ -291,6 +304,13 @@ allow_unsafe = false
+@@ -294,6 +307,13 @@ allow_unsafe = false
  [crate.cxxbridge-macro.extra_kv]
  allow_unsafe = false
  
@@ -568,7 +534,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.derivre.extra_kv]
  allow_unsafe = false
  
-@@ -322,6 +342,12 @@ multiversion_cleanup_bug = "https://crbug.com/482994758"
+@@ -325,6 +345,12 @@ multiversion_cleanup_bug = "https://crbug.com/482994758"
  [crate.displaydoc.extra_kv]
  allow_unsafe = false
  
@@ -578,12 +544,12 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
 +[crate.dtoa-short]
 +extra_kv = { allow_unsafe = true }
 +
- [crate.dtor]
- extra_input_roots = ["../README.md"]
- extra_kv = { allow_unsafe = false }
-@@ -362,6 +388,11 @@ allow_unsafe = false
+ [crate.either.extra_kv]
+ allow_unsafe = true
+ 
+@@ -367,6 +393,11 @@ allow_unsafe = false
  [crate.fixed_decimal.extra_kv]
- allow_unsafe = false
+ allow_unsafe = true
  
 +[crate.flatbuffers]
 +# The build script only checks for a nightly rustc to use unstable features.
@@ -593,7 +559,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.flate2]
  ban_features = [
      # `any_zlib` feature is banned because Chromium does not use the `zlib`
-@@ -384,6 +415,9 @@ allow_unsafe = true
+@@ -389,6 +420,9 @@ allow_unsafe = true
  [crate.font-types.extra_kv]
  allow_unsafe = true
  
@@ -603,7 +569,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.fs2]
  group = 'test'
  allow_first_party_usage = false
-@@ -552,6 +586,12 @@ group = 'safe'
+@@ -554,6 +588,12 @@ group = 'safe'
  allow_first_party_usage = true
  extra_kv = { allow_unsafe = false }
  
@@ -616,7 +582,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.image]
  extra_input_roots = ['../README.md']
  extra_kv = { allow_unsafe = true }
-@@ -688,6 +728,9 @@ extra_kv = { allow_unsafe = true }
+@@ -714,6 +754,9 @@ extra_kv = { allow_unsafe = true }
  [crate.murmur3]
  extra_kv = { allow_unsafe = false }
  
@@ -626,7 +592,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.nix]
  group = 'test'
  allow_first_party_usage = false
-@@ -739,6 +782,24 @@ extra_kv = { allow_unsafe = true }
+@@ -777,6 +820,24 @@ extra_kv = { allow_unsafe = true }
  [crate.parking_lot_core]
  extra_kv = { allow_unsafe = true }
  
@@ -651,7 +617,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.png.extra_kv]
  allow_unsafe = false
  # Web tests (aka WPT tests, also formerly known as Layout Tests) require fast
-@@ -756,6 +817,9 @@ extra_kv = { allow_unsafe = true }
+@@ -798,6 +859,9 @@ extra_kv = { allow_unsafe = true }
  [crate.potential_utf.extra_kv]
  allow_unsafe = true
  
@@ -661,13 +627,16 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.primal-check]
  extra_kv = { allow_unsafe = false }
  
-@@ -781,7 +845,13 @@ cpp_api_from_rust = true
+@@ -823,7 +887,16 @@ cpp_api_from_rust = true
  [crate.quote.extra_kv]
  allow_unsafe = false
  
 -[crate.rand_core]
 +[crate.rand]
 +extra_kv = { allow_unsafe = true }
++
++[crate."rand_core@v0_10"]
++extra_kv = { allow_unsafe = false }
 +
 +[crate."rand_core@v0_6"]
 +extra_kv = { allow_unsafe = true }
@@ -676,7 +645,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  extra_kv = { allow_unsafe = false }
  
  [crate.read-fonts]
-@@ -796,7 +866,7 @@ extra_kv = { allow_unsafe = true }
+@@ -838,7 +911,7 @@ extra_kv = { allow_unsafe = true }
  extra_kv = { allow_unsafe = false }
  
  [crate.regex]
@@ -685,7 +654,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  allow_first_party_usage = false
  extra_kv = { allow_unsafe = true }
  
-@@ -819,6 +889,12 @@ allow_unsafe = false
+@@ -861,6 +934,12 @@ allow_unsafe = false
  extra_kv = { allow_unsafe = true }
  shipped = false
  
@@ -698,7 +667,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.rustfft]
  extra_kv = { allow_unsafe = true }
  
-@@ -838,6 +914,16 @@ extra_kv = { allow_unsafe = true }
+@@ -880,6 +959,16 @@ extra_kv = { allow_unsafe = true }
  [crate.scopeguard]
  extra_kv = { allow_unsafe = true }
  
@@ -715,7 +684,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.serde]
  build_script_outputs = [ "private.rs" ]
  extra_kv = { allow_unsafe = false }
-@@ -861,6 +947,9 @@ extra_kv = { allow_unsafe = false }
+@@ -907,6 +996,9 @@ extra_kv = { allow_unsafe = false }
  [crate.serial_test_derive]
  extra_kv = { allow_unsafe = false }
  
@@ -725,7 +694,7 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  [crate.sfv]
  extra_kv = { allow_unsafe = false }
  
-@@ -874,7 +963,7 @@ allow_unsafe = true
+@@ -926,7 +1018,7 @@ allow_unsafe = true
  allow_unstable_features = ["stdarch_arm_neon_intrinsics"]
  
  [crate.siphasher]
@@ -734,21 +703,27 @@ diff --git a/third_party/rust/chromium_crates_io/gnrt_config.toml b/third_party/
  allow_first_party_usage = false
  extra_input_roots = ["../README.md"]
  extra_kv = { allow_unsafe = true }
-@@ -975,7 +1064,12 @@ allow_unsafe = false
+@@ -1032,11 +1124,16 @@ allow_unsafe = false
  [crate.termcolor.extra_kv]
  allow_unsafe = false
  
 -[crate.thiserror]
+-build_script_outputs = [ "private.rs" ]
++[crate.thiserror-impl]
+ extra_kv = { allow_unsafe = false }
+ 
+-[crate.thiserror-impl]
 +[crate."thiserror@v1"]
 +# The build script only probes rustc for unstable features.
 +remove_build_rs = true
 +extra_kv = { allow_unsafe = false }
 +
 +[crate."thiserror@v2"]
- build_script_outputs = [ "private.rs" ]
++build_script_outputs = [ "private.rs" ]
  extra_kv = { allow_unsafe = false }
  
-@@ -1039,6 +1133,9 @@ extra_kv = { allow_unsafe = false }
+ [crate.timezone_provider]
+@@ -1100,6 +1197,9 @@ extra_kv = { allow_unsafe = false }
  allow_first_party_usage = false
  extra_kv = { allow_unsafe = true }
  
@@ -783,32 +758,19 @@ diff --git a/third_party/rust/regex/v1/README.chromium b/third_party/rust/regex/
  
  Description: An implementation of regular expressions for Rust. This implementation uses
  finite automata and guarantees linear time matching on all inputs.
-diff --git a/third_party/rust/serde/v1/BUILD.gn b/third_party/rust/serde/v1/BUILD.gn
---- a/third_party/rust/serde/v1/BUILD.gn
-+++ b/third_party/rust/serde/v1/BUILD.gn
-@@ -60,6 +60,7 @@ cargo_crate("lib") {
-     "alloc",
-     "default",
-     "derive",
-+    "rc",
-     "serde_derive",
-     "std",
-   ]
-diff --git a/third_party/rust/serde_core/v1/BUILD.gn b/third_party/rust/serde_core/v1/BUILD.gn
---- a/third_party/rust/serde_core/v1/BUILD.gn
-+++ b/third_party/rust/serde_core/v1/BUILD.gn
-@@ -49,6 +49,7 @@ cargo_crate("lib") {
- 
-   features = [
-     "alloc",
-+    "rc",
-     "result",
-     "std",
-   ]
 diff --git a/third_party/rust/siphasher/v1/BUILD.gn b/third_party/rust/siphasher/v1/BUILD.gn
 --- a/third_party/rust/siphasher/v1/BUILD.gn
 +++ b/third_party/rust/siphasher/v1/BUILD.gn
-@@ -44,7 +44,6 @@ cargo_crate("lib") {
+@@ -34,11 +34,15 @@ cargo_crate("lib") {
+ 
+   allow_unsafe = true
+ 
++  features = [
++    "default",
++    "std",
++  ]
++
+   # Only for usage from third-party crates. Add the crate to
    # //third_party/rust/chromium_crates_io/Cargo.toml to use
    # it from first-party code.
    visibility = [ "//third_party/rust/*" ]
@@ -819,7 +781,7 @@ diff --git a/third_party/rust/siphasher/v1/BUILD.gn b/third_party/rust/siphasher
 diff --git a/third_party/rust/siphasher/v1/README.chromium b/third_party/rust/siphasher/v1/README.chromium
 --- a/third_party/rust/siphasher/v1/README.chromium
 +++ b/third_party/rust/siphasher/v1/README.chromium
-@@ -5,7 +5,7 @@ Revision: 451f67d73a772cba325728109bbfa247750ed076
+@@ -5,7 +5,7 @@ Revision: ed028f01a16205b0819fa83b0cdc052e2d5ac3b7
  Update Mechanism: Manual (https://crbug.com/449898466)
  License: Apache-2.0
  License File: //third_party/rust/chromium_crates_io/vendor/siphasher-v1/LICENSE-APACHE
@@ -828,7 +790,7 @@ diff --git a/third_party/rust/siphasher/v1/README.chromium b/third_party/rust/si
 +Shipped: yes
 +Security Critical: yes
  
- Description: SipHash-2-4, SipHash-1-3 and 128-bit variants in pure Rust
+ Description: SipHash-2-4 and SipHash-1-3 keyed hash functions in pure Rust, with 64-bit and 128-bit output and no_std support
 diff --git a/third_party/rust/stable_deref_trait/v1/BUILD.gn b/third_party/rust/stable_deref_trait/v1/BUILD.gn
 --- a/third_party/rust/stable_deref_trait/v1/BUILD.gn
 +++ b/third_party/rust/stable_deref_trait/v1/BUILD.gn
