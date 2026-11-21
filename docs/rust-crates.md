@@ -19,12 +19,14 @@ hand: change `Cargo.toml` or `gnrt_config.toml` and regenerate.
 After a Chromium update the patch stops applying, because Chromium changes its lockfile and crate
 files with every release. To add a crate or change features, the steps are the same.
 
-1. Build the new Chromium source with `build.sh` far enough to have `build/src` and
-   `build/src/out/Default/gn`, or apply the patch series by hand without the crates patch.
+1. Have the new Chromium source in `build/src` with the Rust toolchain unpacked and
+   `build/src/out/Default/gn` built ([upgrading.md](upgrading.md), steps 4 to 6). The source's
+   patch state doesn't matter: `prepare` reads Chromium's files from git.
 2. Run `scripts/update-rust-crates.sh prepare`. It copies Chromium's crate folders from
-   `build/src` into `.local/chromium`, as released, and applies Pantera's crates on top. If the
-   patch no longer applies, add `adblock` to `Cargo.toml` again by hand and drop the rejected
-   hunks: gnrt regenerates the rest.
+   `build/src` into `.local/chromium`, as released, and applies Pantera's crates on top. After a
+   Chromium update some hunks are rejected. The lockfile's don't matter, because gnrt resolves it
+   again; `prepare` lists the others (usually entries in `gnrt_config.toml` whose neighbors
+   changed), which you redo by hand from the `.rej` file and then delete.
 3. Edit `.local/chromium/third_party/rust/chromium_crates_io/Cargo.toml` or `gnrt_config.toml`.
 4. Run `scripts/update-rust-crates.sh update`. It runs `gnrt vendor` (which downloads from
    crates.io) and `gnrt gen`, then rewrites `third_party/` and the crates patch.

@@ -90,31 +90,30 @@ for the formats, and use its script rather than reading folders by hand.
   windows.
 - `docs/releasing.md`: how to sign, notarize and publish a release.
 - `docs/rust-crates.md`: how the Rust crates are vendored and regenerated.
+- `docs/upgrading.md`: how to move to a newer Chromium and raise the dependencies, with
+  `scripts/upgrade.py` for the mechanical steps (version check, upstream sync, ad-block pins,
+  applying the patch series one patch at a time).
 - `Makefile`: shortcuts for the commands in the README and `docs/releasing.md` (`make help`).
 - `VERSION`: Pantera's own version (DECISION-9). `build.sh` passes it to Chromium through the
   BRANDING file; raise it with `make bump-patch`, `bump-minor` or `bump-major`.
 
 ## Upstream
 
-- Base: ungoogled-chromium-macos `cb57ca4773476197e810b251dea6623907bff40a` (Chromium 156.0.8078.47).
-  The commit `chore: import ungoogled-chromium-macos at cb57ca4` holds the unmodified copy.
+- Base: ungoogled-chromium-macos `84768e74ece113d9e68e5d774808afe6c3a8fbe6` (Chromium 157.0.8103.78).
+  The commit `chore: import ungoogled-chromium-macos at cb57ca4` holds the first unmodified copy;
+  each later sync is a `chore: sync ungoogled-chromium-macos to <sha>` commit.
 - Not imported: `.github/` (upstream's release CI), `README.md`, `announcements.md`.
 - Pantera replaces upstream's `set-bundle-identifier.patch` with `patches/pantera/macos/set-bundle-identifier.patch`
   and the bundle ID in `branding/overlay/.../BRANDING`.
 
-To sync with a newer upstream:
-
-```bash
-git remote add upstream https://github.com/ungoogled-software/ungoogled-chromium-macos.git  # once
-git fetch upstream
-git diff <base> upstream/master -- . ':!.github' ':!README.md' ':!announcements.md' ':!ungoogled-chromium' | git apply -3
-git -C ungoogled-chromium fetch
-git -C ungoogled-chromium checkout "$(git ls-tree upstream/master ungoogled-chromium | awk '{print $3}')"
-```
+To move to a newer Chromium or raise Pantera's dependencies, follow
+[docs/upgrading.md](docs/upgrading.md) (the `upgrade-chromium` skill in `.claude/skills/` for
+agents). `scripts/upgrade.py status` shows what is pinned and what is available, and
+`scripts/upgrade.py sync-upstream` applies upstream's changes since the base, with the submodule.
 
 Commit the sync on its own (`chore: sync ungoogled-chromium-macos to <sha>`), then any Pantera
-fix-ups in separate commits, and update the base above. Conflicts are most likely in `build.sh`,
-`sign_and_package_app.sh`, `patches/series` and the bundle ID patch.
+fix-ups in separate commits, and update the base above: `sync-upstream` reads it from this file.
+Conflicts are most likely in `build.sh`, `sign_and_package_app.sh` and the bundle ID patch.
 
 ## Rules
 

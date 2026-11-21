@@ -12,11 +12,16 @@ _main_repo="$_root_dir/ungoogled-chromium"
 
 # Clone to get the Chromium Source
 clone=true
+# Pantera: -k keeps a source tree that scripts/upgrade.py apply-patches already patched.
+keep_source=false
 _sdk_path=""
-while getopts ':ds:h' OPTION; do
+while getopts ':dks:h' OPTION; do
   case "$OPTION" in
     d)
       clone=false
+      ;;
+    k)
+      keep_source=true
       ;;
     s)
       _sdk_path=$OPTARG
@@ -27,13 +32,14 @@ while getopts ':ds:h' OPTION; do
       _sdk_path="$(greadlink -f "$_sdk_path")"
       ;;
     h)
-      echo "Usage: $0 [-d] [-s SDK_PATH] [arm64|x86_64]"
+      echo "Usage: $0 [-d] [-k] [-s SDK_PATH] [arm64|x86_64]"
       echo "  -d             Reuse downloaded source archives"
+      echo "  -k             Keep build/src as it is: pruned and patched by hand (docs/upgrading.md)"
       echo "  -s SDK_PATH    Use this macOS SDK for Chromium and bindgen (default: automatic)"
       exit 0
       ;;
     *)
-      echo "Usage: $0 [-d] [-s SDK_PATH] [arm64|x86_64]" >&2
+      echo "Usage: $0 [-d] [-k] [-s SDK_PATH] [arm64|x86_64]" >&2
       exit 1
       ;;
   esac
@@ -54,7 +60,9 @@ fi
 rm -rf "$_src_dir/out" || true
 mkdir -p "$_download_cache"
 
-if $clone; then
+if $keep_source; then
+  echo "Keeping the source in $_src_dir: not cloning, pruning or patching it"
+elif $clone; then
   "$_root_dir/retrieve_and_unpack_resource.py" -g $_arch
 else
   "$_root_dir/retrieve_and_unpack_resource.py" -d -g $_arch
@@ -63,8 +71,10 @@ fi
 mkdir -p "$_src_dir/out/Default"
 
 # Apply patches and substitutions
-python3 "$_main_repo/utils/prune_binaries.py" "$_src_dir" "$_main_repo/pruning.list"
-python3 "$_main_repo/utils/patches.py" apply "$_src_dir" "$_main_repo/patches" "$_root_dir/patches"
+if ! $keep_source; then
+  python3 "$_main_repo/utils/prune_binaries.py" "$_src_dir" "$_main_repo/pruning.list"
+  python3 "$_main_repo/utils/patches.py" apply "$_src_dir" "$_main_repo/patches" "$_root_dir/patches"
+fi
 
 # Keep the files Pantera needs with their real domains (see the reasons in the
 # exclusions list) out of domain substitution.
