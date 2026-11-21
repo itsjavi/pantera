@@ -146,9 +146,10 @@ export PATH="$PWD/build/python/bin:$PATH"
 MACOS_AD_HOC_SIGNING=1 ./build.sh -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 ```
 
-- Chromium 156 builds with the macOS 26 SDK. The macOS 27 SDK in Xcode 27 doesn't work: the
-  linker bundled with Chromium rejects its `.tbd` files. Pass a macOS 26 SDK with `-s`, such as
-  the Command Line Tools' `MacOSX26.5.sdk` above or the one in Xcode 26.
+- Chromium 157 builds with the macOS 26 SDK. The macOS 27 SDK in Xcode 27 didn't work with
+  Chromium 156 (the linker bundled with Chromium rejected its `.tbd` files) and hasn't been tried
+  since. Pass a macOS 26 SDK with `-s`, such as the Command Line Tools' `MacOSX26.5.sdk` above or
+  the one in Xcode 26.
 - If `xcode-select -p` prints `/Library/Developer/CommandLineTools`, point the build at Xcode
   with `export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 - If your git config sets up Git LFS, install `git-lfs` and build with `GIT_LFS_SKIP_SMUDGE=1`.

@@ -189,6 +189,12 @@ dark mode:
 - An extension installs from the Chrome Web Store.
 - `chrome://settings` and `chrome://extensions` say Pantera, not Chromium.
 
+The app follows the system's appearance. For light mode on a Mac set to dark, add
+`-NSRequiresAquaSystemAppearance YES` after the URL on the command line (Chromium opens `yes` as
+a second tab; ignore it). `--remote-debugging-port=<port>` lets a script open pages in the running
+copy: `curl -X PUT "http://127.0.0.1:<port>/json/new?chrome://settings/help"`. Confirming the
+extension's install prompt takes a click by hand.
+
 ## 9. Release
 
 Raise `VERSION` (`make bump-patch` or `bump-minor`), reset `revision.txt` to 1 for a new Chromium

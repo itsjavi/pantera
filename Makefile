@@ -4,7 +4,7 @@
 
 -include local.mk
 
-# Chromium 156 needs a macOS 26 SDK (README, Building).
+# Chromium 157 is built with a macOS 26 SDK (README, Building).
 SDK ?= /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 DEVELOPER_DIR ?= /Applications/Xcode.app/Contents/Developer
 # The first Developer ID Application identity in the keychain.

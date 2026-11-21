@@ -33,7 +33,7 @@ or `make bump-major`.
 
 Release files and tags are still named `<Chromium version>-<ungoogled-chromium
 revision>.<Pantera revision>`, read from `ungoogled-chromium/chromium_version.txt`,
-`ungoogled-chromium/revision.txt` and `revision.txt`, for example `156.0.8078.47-1.1`. To release
+`ungoogled-chromium/revision.txt` and `revision.txt`, for example `157.0.8103.78-1.1`. To release
 Pantera changes on the same Chromium version, raise `revision.txt`.
 
 ## Build, sign and notarize
@@ -69,7 +69,7 @@ Pantera changes on the same Chromium version, raise `revision.txt`.
 Upload the `.dmg` and its checksum as a GitHub Release, tagged with the version:
 
 ```bash
-version=156.0.8078.47-1.1
+version=157.0.8103.78-1.1
 cd build
 shasum -a 256 "pantera-browser_${version}_macos.dmg" > SHA256SUMS
 gh release create "$version" "pantera-browser_${version}_macos.dmg" SHA256SUMS \
