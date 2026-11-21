@@ -153,6 +153,25 @@ repeatable. The build takes several hours: run it in the background.
   `ditto pantera build/src/pantera`. For a failure in patched Chromium code, fix the file in
   `build/src` and refresh the patch from it.
 
+If the Mac crashes or loses power during the build, don't continue from `out/Default`: files
+written just before the crash can be incomplete, and ninja would take them as built. Start the
+output folder again, keeping only what `build.sh` put there:
+
+```bash
+cd build/src
+mkdir -p ../../.local/out-keep && cp out/Default/args.gn out/Default/gn ../../.local/out-keep/
+rm -rf out/Default && mkdir -p out/Default/sdk
+cp ../../.local/out-keep/args.gn ../../.local/out-keep/gn out/Default/
+ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk out/Default/sdk/selected_macos_sdk
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk ./out/Default/gn gen out/Default --fail-on-unused-args
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk ninja -C out/Default chrome chromedriver
+```
+
+A kernel panic with "watchdog timeout" during a build means the machine ran out of memory. The
+panic report in `/Library/Logs/DiagnosticReports/` lists every process and its memory
+(`processByPid`); look for one build step running far more processes than ninja's job count
+(TASK-38 has an example, fixed by `patches/pantera/gn/serialize-bindings-generation.patch`).
+
 Also build and run the unit tests:
 
 ```bash

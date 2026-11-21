@@ -161,6 +161,9 @@ def cmd_sync_upstream(args) -> None:
     excludes = [f":!{path}" for path in NOT_IMPORTED]
     diff = run("git", "diff", "--binary", base, target, "--", ".", *excludes, stdout=subprocess.PIPE).stdout
     applied = subprocess.run(["git", "apply", "-3", "--whitespace=nowarn"], cwd=ROOT, input=diff, text=True)
+    if applied.returncode != 0 and not output("git", "diff", "--cached", "--name-only"):
+        # git apply is all or nothing when a file it changes is missing here.
+        sys.exit("git apply applied nothing. Add the file it names to NOT_IMPORTED if Pantera dropped it.")
 
     # patches/series conflicts every time: Pantera's patches follow the line upstream appends to.
     series = ROOT / "patches" / "series"
@@ -181,10 +184,8 @@ def cmd_sync_upstream(args) -> None:
     chromium = (MAIN_REPO / "chromium_version.txt").read_text().strip()
     conflicts = output("git", "diff", "--name-only", "--diff-filter=U")
     print(f"\nApplied {base[:10]}..{target[:10]} (Chromium {chromium}), submodule at {submodule[:10]}.")
-    if applied.returncode != 0 or conflicts:
-        print("Resolve what git apply reported above, then:")
-        if conflicts:
-            print("Conflicts:\n  " + conflicts.replace("\n", "\n  "))
+    if conflicts:
+        print("Resolve these conflicts and `git add` them first:\n  " + conflicts.replace("\n", "\n  "))
     print("Next:")
     print("  1. Read `git diff --cached` (build.sh, flags.macos.gn, patches/series, downloads-*.ini).")
     print(f'  2. git commit -m "chore: sync ungoogled-chromium-macos to {target[:7]}"')
