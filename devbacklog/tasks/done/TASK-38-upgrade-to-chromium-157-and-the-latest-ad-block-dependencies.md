@@ -5,6 +5,7 @@ priority: high
 labels: [phase-1, build, release]
 depends_on: []
 created: 2026-11-21
+completed: 2026-11-21
 ---
 
 ## Goal
@@ -27,7 +28,7 @@ do it often and asked for a script and a skill for it (2026-11-21).
       in light and dark mode
 - [x] `scripts/upgrade.py`, `docs/upgrading.md` and the `upgrade-chromium` skill cover the
       procedure
-- [ ] A release build for end users exists: signed with the Developer ID and notarized
+- [x] A release build for end users exists: signed with the Developer ID and notarized
 
 ## Notes
 
@@ -88,8 +89,12 @@ do it often and asked for a script and a skill for it (2026-11-21).
 - Web Store: the detail page offers the install button and the "Add extension" prompt appears.
   Confirming it wasn't done: the prompt is a native dialog and the session had no Accessibility
   permission to click it. Check one install by hand before releasing.
-- Not done: the release build. Signing with the Developer ID and notarizing (`make release`)
-  uploads to Apple and uses the keychain, so it waits for the user's go-ahead. That is why this
-  task is still in progress.
+- Release build (`make release`, on the user's go-ahead): signed with the Developer ID, app and
+  disk image both notarized ("Accepted") and stapled; `spctl` reports "Notarized Developer ID" for
+  both and `syspolicy_check distribution` passes. The signed app launches with the hardened
+  runtime, loads a page and downloads its filter lists.
+  `build/pantera-browser_157.0.8103.78-1.1_macos.dmg`, SHA-256
+  `d3c8479aee3030d46598c94e8cade98cc41d0572354f8f6eadcadd83f3069250`. Not published: no tag, no
+  GitHub release, nothing pushed.
 - Seen while checking, not from this upgrade: `chrome://version` still shows Chromium's logo and
   wordmark (TASK-39).
