@@ -2,7 +2,7 @@ Name: Brave adblock-resources
 Short Name: brave_adblock_resources
 URL: https://github.com/brave/adblock-resources
 Version: 0
-Revision: 6da9b247c3368baa8b4f24cd02046e18702a6527
+Revision: b84ad0fd6663a88c1402bc06a4abd5ab8be8fb3c
 Update Mechanism: Manual
 License: MPL-2.0
 License File: LICENSE
