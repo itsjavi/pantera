@@ -54,3 +54,4 @@ pantera/shields/add-shields-button.patch
 pantera/shields/hide-cookie-controls-icon.patch
 pantera/shields/add-cosmetic-filters.patch
 pantera/macos/local-network-usage-description.patch
+pantera/gn/serialize-bindings-generation.patch

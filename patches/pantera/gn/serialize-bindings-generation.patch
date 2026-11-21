@@ -1,0 +1,40 @@
+# Generate Blink's bindings one type at a time.
+#
+# Chromium 157 split the bindings generator into 11 actions, one per type, so
+# that remote execution can run them on separate workers. Each action starts a
+# worker process per CPU core, and on macOS every worker loads its own copy of
+# the Web IDL database. A local build runs all 11 at once: on an 18-core Mac
+# that was 230 Python processes holding 39.5 GB, which exhausted a 48 GB
+# machine until the kernel's watchdog panicked it (TASK-38). A pool of depth 1
+# runs them in sequence, each still using every core, as the single action did
+# before the split.
+
+--- a/third_party/blink/renderer/bindings/BUILD.gn
++++ b/third_party/blink/renderer/bindings/BUILD.gn
+@@ -133,6 +133,16 @@
+          ] + rebase_path(input_data_files, root_build_dir)
+ }
+ 
++# Pantera: each generate_bindings action starts one worker process per CPU core,
++# and every worker loads its own copy of the Web IDL database. Chromium runs the
++# per-type actions below in parallel, which suits remote execution; on one
++# machine that is 11 times the cores in Python processes at once.
++if (current_toolchain == default_toolchain) {
++  pool("generate_bindings_pool") {
++    depth = 1
++  }
++}
++
+ template("generate_bindings") {
+   action_with_pydeps(target_name) {
+     script = "scripts/generate_bindings.py"
+@@ -143,6 +153,9 @@
+ 
+     if (defined(invoker.pool)) {
+       pool = invoker.pool
++    } else {
++      # Pantera: one generator at a time (see generate_bindings_pool above).
++      pool = "//third_party/blink/renderer/bindings:generate_bindings_pool($default_toolchain)"
+     }
+ 
+     web_idl_database_outputs = get_target_outputs(":web_idl_database")
